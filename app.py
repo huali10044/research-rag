@@ -5,12 +5,21 @@ Run:  streamlit run app.py
 """
 
 import sys
+import tomllib
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 import streamlit as st
 from sentence_transformers import SentenceTransformer
-from rag import retrieve, build_context, generate_answer, get_collection
+from rag import retrieve, build_context, generate_answer, get_collection, resolve_backend, BACKENDS
+
+# ── Load config ───────────────────────────────────────────────────────────────
+_CONFIG_PATH = Path(__file__).parent / "config.toml"
+with open(_CONFIG_PATH, "rb") as _f:
+    _CONFIG = tomllib.load(_f)
+
+_DEFAULT_BACKEND = _CONFIG["llm"]["backend"]
+_DEFAULT_MODEL   = _CONFIG["llm"]["model"] or None
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -23,6 +32,24 @@ st.set_page_config(
 with st.sidebar:
     st.title("📚 Research RAG")
     st.markdown("**Dr. Hua Li — Publication Assistant**")
+    st.divider()
+
+    backend_options = list(BACKENDS.keys())
+    default_idx = backend_options.index(_DEFAULT_BACKEND) if _DEFAULT_BACKEND in backend_options else 0
+    selected_backend = st.selectbox("LLM Backend", backend_options, index=default_idx)
+
+    backend_cfg = BACKENDS[selected_backend]
+    default_model_for_backend = _DEFAULT_MODEL if (
+        _DEFAULT_BACKEND == selected_backend and _DEFAULT_MODEL
+    ) else backend_cfg["default_model"]
+
+    selected_model = st.text_input(
+        "Model",
+        value=default_model_for_backend,
+        key=f"model_{selected_backend}_{default_model_for_backend}",
+    )
+
+    st.caption(backend_cfg["notes"])
     st.divider()
 
     top_k = st.slider("Sources to retrieve", min_value=2, max_value=8, value=4)
@@ -87,7 +114,10 @@ if prompt := st.chat_input("Ask a question about your research...", key="chat_in
                 embedder, collection = load_resources()
                 chunks  = retrieve(prompt, embedder, collection, top_k=top_k)
                 context = build_context(chunks)
-                answer  = generate_answer(prompt, context)
+                backend, model = resolve_backend(selected_backend)
+                if selected_model:
+                    model = selected_model
+                answer  = generate_answer(prompt, context, backend, model)
                 st.markdown(answer)
 
                 if show_sources:

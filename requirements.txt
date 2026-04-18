@@ -1,15 +1,15 @@
 # Core RAG stack
 chromadb>=0.4.22
 sentence-transformers>=2.6.0
-langchain>=0.1.0
-langchain-community>=0.0.20
-
-# PDF ingestion
 pypdf>=3.17.0
 
-# LLM backends (install whichever you're using)
-anthropic>=0.20.0        # for Claude — recommended
-# openai>=1.10.0         # uncomment for GPT-4o-mini
+# LLM backends — install whichever you're using
+# Free tier:
+google-genai>=1.0.0        # Gemini (free tier) — aistudio.google.com
+openai>=1.10.0             # also used by groq, mistral, openrouter, ollama (OpenAI-compatible)
+cohere>=5.0.0              # Cohere Command-R (free trial) — dashboard.cohere.com
+# Paid:
+anthropic>=0.20.0          # Claude — console.anthropic.com
 
 # Web UI
 streamlit>=1.32.0
@@ -18,7 +18,3 @@ streamlit>=1.32.0
 jupyter>=1.0.0
 matplotlib>=3.8.0
 numpy>=1.26.0
-
-# Optional: local model fallback (large download, skip if you have an API key)
-# transformers>=4.38.0
-# torch>=2.2.0

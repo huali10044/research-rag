@@ -16,8 +16,6 @@ from typing import Optional
 
 import chromadb
 from chromadb.config import Settings
-from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from sentence_transformers import SentenceTransformer
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -33,7 +31,7 @@ CHUNK_OVERLAP   = 150   # overlap to preserve context across chunks
 
 def get_embedder() -> SentenceTransformer:
     print(f"Loading embedding model: {EMBED_MODEL}")
-    return SentenceTransformer(EMBED_MODEL)
+    return SentenceTransformer(EMBED_MODEL, device="cpu")
 
 
 def get_chroma_collection(reset: bool = False):
@@ -51,15 +49,27 @@ def get_chroma_collection(reset: bool = False):
 
 
 def chunk_text(text: str, source_meta: dict) -> list[dict]:
-    """Split text into overlapping chunks, preserving metadata."""
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=CHUNK_SIZE,
-        chunk_overlap=CHUNK_OVERLAP,
-        separators=["\n\n", "\n", ". ", " "],
-    )
-    chunks = splitter.split_text(text)
+    """Split text into overlapping chunks — pure Python, no LangChain needed."""
+    chunks = []
+    start = 0
+    while start < len(text):
+        end = start + CHUNK_SIZE
+        chunk = text[start:end]
+        # Try to break at a natural boundary rather than mid-word
+        if end < len(text):
+            for sep in ["\n\n", "\n", ". ", " "]:
+                idx = chunk.rfind(sep)
+                if idx > CHUNK_SIZE // 2:
+                    chunk = chunk[:idx + len(sep)]
+                    break
+        chunks.append(chunk.strip())
+        advance = len(chunk) - CHUNK_OVERLAP
+        start += max(advance, 1)
+
     results = []
     for i, chunk in enumerate(chunks):
+        if not chunk:
+            continue
         doc_id = hashlib.md5(f"{source_meta['title']}_chunk_{i}".encode()).hexdigest()
         results.append({
             "id":       doc_id,
@@ -76,17 +86,31 @@ def ingest_pdfs(collection, embedder) -> int:
         print(f"No PDFs found in {PAPERS_DIR} — skipping PDF ingestion.")
         return 0
 
+    try:
+        from pypdf import PdfReader
+    except ImportError:
+        print("pypdf not installed — skipping PDF ingestion. Run: pip install pypdf")
+        return 0
+
     count = 0
     for pdf_path in pdf_files:
         print(f"  Ingesting: {pdf_path.name}")
-        loader = PyPDFLoader(str(pdf_path))
-        pages  = loader.load()
-        full_text = "\n\n".join(p.page_content for p in pages)
+        reader = PdfReader(str(pdf_path))
+        full_text = "\n\n".join(page.extract_text() or "" for page in reader.pages)
+
+        # Extract title from first non-empty line of first page
+        first_page_text = reader.pages[0].extract_text() or ""
+        title = pdf_path.stem.replace("_", " ").title()  # fallback
+        for line in first_page_text.splitlines():
+            line = line.strip()
+            if len(line) > 10 and not line.startswith("{") and "@" not in line:
+                title = line
+                break
 
         meta = {
-            "source":    pdf_path.name,
-            "title":     pdf_path.stem.replace("_", " ").title(),
-            "type":      "pdf",
+            "source": pdf_path.name,
+            "title":  title,
+            "type":   "pdf",
         }
         chunks = chunk_text(full_text, meta)
         _upsert_chunks(collection, embedder, chunks)
@@ -97,7 +121,7 @@ def ingest_pdfs(collection, embedder) -> int:
 
 def ingest_metadata_papers(collection, embedder) -> int:
     """Ingest papers from structured metadata (papers_metadata.py)."""
-    from src.papers_metadata import PAPERS   # lazy import so CLI still works without it
+    from papers_metadata import PAPERS   # lazy import so CLI still works without it
 
     count = 0
     for paper in PAPERS:
@@ -140,7 +164,7 @@ def _upsert_chunks(collection, embedder, chunks: list[dict]):
     texts     = [c["text"] for c in chunks]
     ids       = [c["id"]   for c in chunks]
     metadatas = [c["metadata"] for c in chunks]
-    embeddings = embedder.encode(texts, show_progress_bar=False).tolist()
+    embeddings = embedder.encode(texts, show_progress_bar=False, batch_size=16).tolist()
     collection.upsert(ids=ids, embeddings=embeddings, documents=texts, metadatas=metadatas)
 
 

@@ -1,0 +1,6 @@
+[llm]
+# Default backend to use. Options: gemini, anthropic, groq, mistral, openrouter, cohere, ollama, local, auto
+backend = "gemini"
+
+# Default model override. Leave empty ("") to use each backend's default model.
+model = "gemini-2.5-flash-lite"
