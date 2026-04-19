@@ -4,6 +4,7 @@ app.py — Streamlit web interface for the Research Paper RAG system.
 Run:  streamlit run app.py
 """
 
+import os
 import sys
 import tomllib
 from pathlib import Path
@@ -12,6 +13,11 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 import streamlit as st
 from sentence_transformers import SentenceTransformer
 from rag import retrieve, build_context, generate_answer, get_collection, resolve_backend, BACKENDS
+
+# ── Inject Streamlit secrets into os.environ (for Streamlit Cloud) ────────────
+for _key, _val in st.secrets.items():
+    if isinstance(_val, str):
+        os.environ.setdefault(_key, _val)
 
 # ── Load config ───────────────────────────────────────────────────────────────
 _CONFIG_PATH = Path(__file__).parent / "config.toml"

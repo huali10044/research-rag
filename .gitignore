@@ -24,9 +24,6 @@ key.sh
 .ipynb_checkpoints/
 *.ipynb
 
-# Data files
-data/
-
 # Streamlit
 .streamlit/secrets.toml
 
@@ -38,13 +35,9 @@ Thumbs.db
 .vscode/
 .idea/
 
-# Chroma / vector DBs
-chroma_db/
-*.db
-*.sqlite
-
 # Logs
 *.log
 
 # Test artifacts
 test
+data/papers/
