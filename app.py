@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 import streamlit as st
 from sentence_transformers import SentenceTransformer
-from rag import retrieve, build_context, generate_answer, get_collection, resolve_backend, BACKENDS
+from rag import adaptive_answer, classify_query, get_collection, resolve_backend, BACKENDS
 
 # ── Inject Streamlit secrets into os.environ (for Streamlit Cloud) ────────────
 for _key, _val in st.secrets.items():
@@ -94,9 +94,16 @@ if "messages" not in st.session_state:
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-        if message.get("sources") and show_sources:
-            with st.expander(f"Sources ({len(message['sources'])} chunks retrieved)"):
-                for i, src in enumerate(message["sources"], 1):
+        if show_sources:
+            srcs       = message.get("sources", [])
+            qtype      = message.get("query_type", "")
+            label      = f"Sources · {qtype} query" if qtype else "Sources"
+            if srcs:
+                label += f" · {len(srcs)} chunks"
+            with st.expander(label):
+                if not srcs:
+                    st.caption("Answer derived from corpus metadata — no text chunks retrieved.")
+                for i, src in enumerate(srcs, 1):
                     meta = src["metadata"]
                     st.markdown(
                         f"**{i}. {meta.get('title', 'Unknown')}** ({meta.get('year', '?')})  \n"
@@ -114,20 +121,34 @@ if prompt := st.chat_input("Ask a question about your research...", key="chat_in
     with st.chat_message("user"):
         st.markdown(prompt)
 
+    # Resolve "rerun" / "repeat" commands to the last real user question
+    effective_prompt = prompt
+    if classify_query(prompt) == "command":
+        prior_questions = [
+            m["content"] for m in st.session_state.messages
+            if m["role"] == "user" and classify_query(m["content"]) != "command"
+        ]
+        effective_prompt = prior_questions[-1] if prior_questions else prompt
+
     with st.chat_message("assistant"):
         with st.spinner("Searching papers and generating answer..."):
             try:
                 embedder, collection = load_resources()
-                chunks  = retrieve(prompt, embedder, collection, top_k=top_k)
-                context = build_context(chunks)
                 backend, model = resolve_backend(selected_backend)
                 if selected_model:
                     model = selected_model
-                answer  = generate_answer(prompt, context, backend, model)
+                answer, chunks, query_type = adaptive_answer(
+                    effective_prompt, embedder, collection, top_k, backend, model
+                )
                 st.markdown(answer)
 
                 if show_sources:
-                    with st.expander(f"Sources ({len(chunks)} chunks retrieved)"):
+                    label = f"Sources · {query_type} query"
+                    if chunks:
+                        label += f" · {len(chunks)} chunks"
+                    with st.expander(label):
+                        if not chunks:
+                            st.caption("Answer derived from corpus metadata — no text chunks retrieved.")
                         for i, src in enumerate(chunks, 1):
                             meta = src["metadata"]
                             st.markdown(
@@ -137,12 +158,14 @@ if prompt := st.chat_input("Ask a question about your research...", key="chat_in
                                 f"> {src['text'][:300]}..."
                             )
             except Exception as e:
-                answer = f"Error: {e}\n\nMake sure you've run `python src/ingest.py` first."
+                answer     = f"Error: {e}\n\nMake sure you've run `python src/ingest.py` first."
+                chunks     = []
+                query_type = ""
                 st.error(answer)
-                chunks = []
 
     st.session_state.messages.append({
-        "role":    "assistant",
-        "content": answer,
-        "sources": chunks,
+        "role":       "assistant",
+        "content":    answer,
+        "sources":    chunks,
+        "query_type": query_type,
     })

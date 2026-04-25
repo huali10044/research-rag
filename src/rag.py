@@ -1,6 +1,12 @@
 """
 rag.py — Retrieve relevant paper chunks and generate answers using an LLM.
 
+Query routing:
+  stats    → answer directly from corpus_stats.json (no vector search)
+  listing  → inject full paper list as context (no vector search)
+  metadata → vector search + paper list header
+  content  → vector search with per-paper deduplication
+
 Supported backends (--backend flag):
   Free tier:
     gemini      Google Gemini 2.0 Flash     — aistudio.google.com     GEMINI_API_KEY
@@ -14,16 +20,11 @@ Supported backends (--backend flag):
     openai      GPT-4o-mini                 — platform.openai.com     OPENAI_API_KEY
   Fallback:
     local       TinyLlama via transformers  — (no key, slow)
-
-Run:
-  python src/rag.py --query "What work have I done on user modeling?"
-  python src/rag.py --interactive
-  python src/rag.py --interactive --backend gemini
-  python src/rag.py --interactive --backend groq --model llama-3.3-70b-versatile
-  python src/rag.py --list-backends
 """
 
 import os
+import re
+import json
 import tomllib
 import argparse
 from pathlib import Path
@@ -35,14 +36,14 @@ from sentence_transformers import SentenceTransformer
 # ── Config ────────────────────────────────────────────────────────────────────
 DATA_DIR        = Path(__file__).parent.parent / "data"
 CHROMA_DIR      = DATA_DIR / "chroma_db"
+STATS_FILE      = DATA_DIR / "corpus_stats.json"
 COLLECTION_NAME = "research_papers"
 EMBED_MODEL     = "all-MiniLM-L6-v2"
 
 TOP_K           = 5
-MAX_CONTEXT_LEN = 4000
+MAX_CONTEXT_LEN = 12000   # characters; increased from 4000 to fit corpus overview + chunks
 
 # ── Backend registry ──────────────────────────────────────────────────────────
-# auto-detection tries backends in this order
 AUTO_ORDER = ["gemini", "groq", "mistral", "openrouter", "cohere", "anthropic", "openai", "ollama", "local"]
 
 BACKENDS = {
@@ -103,7 +104,7 @@ BACKENDS = {
 }
 
 
-# ── Retrieval ─────────────────────────────────────────────────────────────────
+# ── ChromaDB access ───────────────────────────────────────────────────────────
 
 def get_collection():
     client = chromadb.PersistentClient(
@@ -113,7 +114,131 @@ def get_collection():
     return client.get_collection(COLLECTION_NAME)
 
 
+# ── Corpus stats ──────────────────────────────────────────────────────────────
+
+def load_corpus_stats() -> dict | None:
+    """Load pre-computed corpus stats from data/corpus_stats.json, or None if missing."""
+    if STATS_FILE.exists():
+        try:
+            return json.loads(STATS_FILE.read_text())
+        except Exception:
+            pass
+    return None
+
+
+def build_corpus_context(stats: dict, verbose: bool = True) -> str:
+    """Format corpus stats as a plain-text block for LLM context injection."""
+    papers = stats.get("papers", [])
+    yr     = stats.get("year_range", {})
+
+    lines = ["CORPUS OVERVIEW"]
+    lines.append(f"Total papers: {stats['total_papers']}")
+    if yr.get("min") and yr.get("max"):
+        lines.append(f"Publication years: {yr['min']} – {yr['max']}")
+    if stats.get("total_words"):
+        lines.append(f"Total words across all papers: {stats['total_words']:,}")
+    lines.append("")
+    lines.append("PAPERS (sorted by year):")
+
+    for p in sorted(papers, key=lambda x: (x.get("year") or 0)):
+        year  = p.get("year", "?")
+        title = p.get("title", "Unknown")
+        venue = p.get("venue", "")
+        wc    = p.get("word_count", 0)
+
+        authors = p.get("authors", "")
+        if isinstance(authors, list):
+            auth_str = ", ".join(authors[:3])
+            if len(authors) > 3:
+                auth_str += " et al."
+        else:
+            auth_str = authors or ""
+
+        line = f"- [{year}] {title}"
+        if venue:
+            line += f" | {venue}"
+        if verbose and wc:
+            line += f" | {wc:,} words"
+        lines.append(line)
+        if auth_str:
+            lines.append(f"  Authors: {auth_str}")
+
+    return "\n".join(lines)
+
+
+# ── Query classification ──────────────────────────────────────────────────────
+
+_STATS_PATTERNS = [
+    r"\bhow many\b",
+    r"\btotal (number|count|papers|publications|works)\b",
+    r"\bnumber of (papers|publications|works)\b",
+    r"\bword count\b",
+    r"\bhow (long|many words)\b",
+    r"\b(last|first|oldest|newest|latest|most recent|earliest) paper\b",
+    r"\bwhen (was|did).{0,40}publish",
+    r"\bwhat year\b",
+    r"\bpublication (date|year)\b",
+    r"\bmost prolific\b",
+]
+
+_LISTING_PATTERNS = [
+    r"\blist (all|your|my|the|his)\b",
+    r"\ball (papers|publications|works|research)\b",
+    r"\b(give|show) me (all|a list|the list)\b",
+    r"\bwhat (papers|publications|works) (did|has|have)\b",
+    r"\bwhich papers\b",
+    r"\bfull list\b",
+    r"\bcomplete list\b",
+    r"\blist of (papers|publications)\b",
+    r"\bpublication list\b",
+]
+
+_METADATA_PATTERNS = [
+    r"\bwho (wrote|authored|are the authors of)\b",
+    r"\b(author|authors) of\b",
+    r"\bpublished (in|at|by)\b",
+    r"\b(venue|conference|journal) (for|of)\b",
+    r"\bwhere was\b",
+    r"\bdoi\b",
+]
+
+# Conversational commands that should never hit the RAG pipeline
+_COMMAND_PATTERNS = [
+    r"^rerun\b",
+    r"\brerun (last|that|the last|previous|it)\b",
+    r"\brun (that|it|last|the last) again\b",
+    r"^run again\b",
+    r"\brepeat (that|last|the last|previous|it|the question)\b",
+    r"^repeat$",
+    r"\btry again\b",
+    r"^redo\b",
+    r"\bsame question\b",
+    r"\bsame query\b",
+]
+
+
+def classify_query(query: str) -> str:
+    """Classify query as 'command', 'stats', 'listing', 'metadata', or 'content'."""
+    q = query.lower().strip()
+    for pat in _COMMAND_PATTERNS:
+        if re.search(pat, q):
+            return "command"
+    for pat in _STATS_PATTERNS:
+        if re.search(pat, q):
+            return "stats"
+    for pat in _LISTING_PATTERNS:
+        if re.search(pat, q):
+            return "listing"
+    for pat in _METADATA_PATTERNS:
+        if re.search(pat, q):
+            return "metadata"
+    return "content"
+
+
+# ── Retrieval ─────────────────────────────────────────────────────────────────
+
 def retrieve(query: str, embedder: SentenceTransformer, collection, top_k: int = TOP_K) -> list[dict]:
+    """Raw vector search — returns top_k chunks sorted by similarity."""
     query_embedding = embedder.encode([query], device="cpu")[0].tolist()
     results = collection.query(
         query_embeddings=[query_embedding],
@@ -134,11 +259,100 @@ def retrieve(query: str, embedder: SentenceTransformer, collection, top_k: int =
     return chunks
 
 
-def build_context(chunks: list[dict]) -> str:
+def _retrieve_deduped(
+    query: str, embedder: SentenceTransformer, collection, top_k: int
+) -> list[dict]:
+    """
+    Retrieve top_k chunks with adaptive per-paper limits based on similarity distribution.
+
+    A paper whose best chunk falls within SIMILARITY_GAP of the top score is treated as
+    co-dominant and may contribute up to top_k chunks (no effective cap). Papers further
+    below the top score are capped at FALLBACK_CAP chunks to preserve result diversity.
+
+    Effect:
+    - Single-topic query (one paper dominates) → that paper fills all top_k slots.
+    - Multi-topic query (several papers close in score) → each gets its fair share.
+    """
+    SIMILARITY_GAP = 0.15   # papers within this margin of top score are unrestricted
+    FALLBACK_CAP   = 2      # cap for papers outside the dominant band
+
+    raw = retrieve(query, embedder, collection, top_k=min(top_k * 4, 40))
+    if not raw:
+        return []
+
+    # Group by paper; track each paper's best (first) similarity score
+    papers: dict[str, float] = {}
+    for chunk in raw:
+        title = chunk["metadata"].get("title", "")
+        if title not in papers:
+            papers[title] = chunk["similarity"]  # raw is sorted descending
+
+    if len(papers) == 1:
+        return raw[:top_k]
+
+    top_score = raw[0]["similarity"]
+    caps = {
+        title: top_k if (top_score - best) <= SIMILARITY_GAP else FALLBACK_CAP
+        for title, best in papers.items()
+    }
+
+    seen:  dict[str, int] = {}
+    result = []
+    for chunk in raw:
+        title = chunk["metadata"].get("title", "")
+        count = seen.get(title, 0)
+        if count < caps[title]:
+            result.append(chunk)
+            seen[title] = count + 1
+        if len(result) >= top_k:
+            break
+    return result
+
+
+def adaptive_retrieve(
+    query: str, embedder: SentenceTransformer, collection, top_k: int = TOP_K
+) -> tuple[list[dict], str, str]:
+    """
+    Route the query based on its type. Returns (chunks, query_type, extra_context).
+
+    - command         → no vector search; app.py resolves by re-running prior query
+    - stats / listing → no vector search; answer from corpus_stats.json
+    - metadata        → vector search + paper list header for grounding
+    - content         → vector search with per-paper deduplication
+    """
+    query_type = classify_query(query)
+    stats      = load_corpus_stats()
+
+    if query_type == "command":
+        return [], query_type, ""
+
+    if query_type in ("stats", "listing"):
+        extra = build_corpus_context(stats, verbose=True) if stats else ""
+        return [], query_type, extra
+
+    if query_type == "metadata":
+        chunks = _retrieve_deduped(query, embedder, collection, top_k)
+        extra  = build_corpus_context(stats, verbose=False) if stats else ""
+        return chunks, query_type, extra
+
+    # content
+    chunks = _retrieve_deduped(query, embedder, collection, top_k)
+    return chunks, query_type, ""
+
+
+# ── Context and prompt assembly ───────────────────────────────────────────────
+
+def build_context(chunks: list[dict], extra_context: str = "") -> str:
+    """Assemble LLM context from retrieved chunks plus optional structured header."""
     parts = []
+    if extra_context:
+        parts.append(extra_context)
     for i, chunk in enumerate(chunks, 1):
         meta   = chunk["metadata"]
-        source = f"{meta.get('title', 'Unknown')} ({meta.get('year', '?')}) — {meta.get('venue', '')}"
+        source = (
+            f"{meta.get('title', 'Unknown')} "
+            f"({meta.get('year', '?')}) — {meta.get('venue', '')}"
+        )
         parts.append(
             f"[Source {i}] {source}\n"
             f"Similarity: {chunk['similarity']}\n\n"
@@ -147,23 +361,22 @@ def build_context(chunks: list[dict]) -> str:
     return "\n\n---\n\n".join(parts)[:MAX_CONTEXT_LEN]
 
 
-# ── Prompts ───────────────────────────────────────────────────────────────────
-
 SYSTEM_PROMPT = """You are a research assistant helping Dr. Hua Li explore and discuss his own published research.
 
-You have access to excerpts from his papers. Answer questions accurately based only on the provided context.
+You have access to a structured overview of all his papers and/or excerpts from the papers themselves.
+Answer questions accurately based only on the provided context.
 If the context doesn't fully answer the question, say so clearly — don't hallucinate details.
 
 When discussing papers, cite them by title and year. Highlight connections between papers where relevant.
-Keep answers focused and grounded in the retrieved text."""
+Keep answers focused and grounded in the retrieved context."""
 
 
 def build_prompt(query: str, context: str) -> str:
     return (
-        f"Here are relevant excerpts from Dr. Hua Li's research papers:\n\n"
+        "Here is context from Dr. Hua Li's research papers:\n\n"
         f"{context}\n\n---\n\n"
         f"Question: {query}\n\n"
-        f"Please answer based on the context above. Cite specific papers by title and year."
+        "Please answer based on the context above. Cite specific papers by title and year."
     )
 
 
@@ -287,15 +500,15 @@ def answer_local(query: str, context: str, model: str) -> str:
 
 
 _BACKEND_FN = {
-    "gemini":      answer_with_gemini,
-    "groq":        answer_with_groq,
-    "mistral":     answer_with_mistral,
-    "openrouter":  answer_with_openrouter,
-    "cohere":      answer_with_cohere,
-    "ollama":      answer_with_ollama,
-    "anthropic":   answer_with_anthropic,
-    "openai":      answer_with_openai,
-    "local":       answer_local,
+    "gemini":     answer_with_gemini,
+    "groq":       answer_with_groq,
+    "mistral":    answer_with_mistral,
+    "openrouter": answer_with_openrouter,
+    "cohere":     answer_with_cohere,
+    "ollama":     answer_with_ollama,
+    "anthropic":  answer_with_anthropic,
+    "openai":     answer_with_openai,
+    "local":      answer_local,
 }
 
 
@@ -316,8 +529,7 @@ def resolve_backend(requested: str) -> tuple[str, str]:
     cfg = BACKENDS[requested]
     if cfg["env_key"] and not os.environ.get(cfg["env_key"]):
         raise EnvironmentError(
-            f"Backend '{requested}' requires {cfg['env_key']} to be set.\n"
-            f"  {cfg['notes']}"
+            f"Backend '{requested}' requires {cfg['env_key']} to be set.\n  {cfg['notes']}"
         )
     return requested, cfg["default_model"]
 
@@ -326,23 +538,45 @@ def generate_answer(query: str, context: str, backend: str, model: str) -> str:
     return _BACKEND_FN[backend](query, context, model)
 
 
-# ── Main interface ─────────────────────────────────────────────────────────────
+# ── High-level interface ──────────────────────────────────────────────────────
+
+def adaptive_answer(
+    query: str,
+    embedder: SentenceTransformer,
+    collection,
+    top_k: int,
+    backend: str,
+    model: str,
+) -> tuple[str, list[dict], str]:
+    """
+    End-to-end adaptive query answering.
+
+    Returns:
+        answer     — LLM-generated response string
+        chunks     — retrieved source chunks (empty for stats/listing queries)
+        query_type — one of 'stats', 'listing', 'metadata', 'content'
+    """
+    chunks, query_type, extra_context = adaptive_retrieve(query, embedder, collection, top_k)
+    context = build_context(chunks, extra_context)
+    answer  = generate_answer(query, context, backend, model)
+    return answer, chunks, query_type
+
 
 def query_once(question: str, backend: str, model: str, show_sources: bool = True) -> str:
     embedder   = SentenceTransformer(EMBED_MODEL, device="cpu")
     collection = get_collection()
 
     print(f"\nQuery: {question}")
-    print("Retrieving relevant chunks...")
-    chunks = retrieve(question, embedder, collection)
+    chunks, query_type, extra_context = adaptive_retrieve(question, embedder, collection)
+    print(f"Query type: {query_type} | Retrieved chunks: {len(chunks)}")
 
-    if show_sources:
-        print(f"\nTop {len(chunks)} sources retrieved:")
+    if show_sources and chunks:
+        print(f"\nTop {len(chunks)} sources:")
         for i, c in enumerate(chunks, 1):
             meta = c["metadata"]
             print(f"  {i}. [{c['similarity']:.3f}] {meta.get('title', '?')[:60]} ({meta.get('year', '?')})")
 
-    context = build_context(chunks)
+    context = build_context(chunks, extra_context)
     print(f"\nGenerating answer (backend: {backend}, model: {model})...\n")
     return generate_answer(question, context, backend, model)
 
@@ -367,8 +601,9 @@ def interactive_mode(backend: str, model: str):
         if not question:
             continue
 
-        chunks  = retrieve(question, embedder, collection)
-        context = build_context(chunks)
+        chunks, query_type, extra_context = adaptive_retrieve(question, embedder, collection)
+        print(f"[{query_type} query, {len(chunks)} chunks]")
+        context = build_context(chunks, extra_context)
         answer  = generate_answer(question, context, backend, model)
         print(f"\nAssistant: {answer}\n")
 
@@ -386,7 +621,6 @@ def list_backends():
 
 
 if __name__ == "__main__":
-    # Load config.toml defaults (CLI flags override these)
     _config_path = Path(__file__).parent.parent / "config.toml"
     _cfg_backend = "auto"
     _cfg_model   = None
@@ -398,16 +632,13 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Query your research paper RAG system")
     parser.add_argument("--query",         type=str,  help="Single question to answer")
-    parser.add_argument("--interactive",   action="store_true", help="Start interactive Q&A session")
-    parser.add_argument("--no-sources",    action="store_true", help="Hide source citations")
-    parser.add_argument("--backend",       type=str,  default=None,
-                        help="LLM backend to use. Use --list-backends to see options.")
-    parser.add_argument("--model",         type=str,  default=None,
-                        help="Override the default model for the selected backend.")
-    parser.add_argument("--list-backends", action="store_true", help="Show all backends and their status")
+    parser.add_argument("--interactive",   action="store_true")
+    parser.add_argument("--no-sources",    action="store_true")
+    parser.add_argument("--backend",       type=str,  default=None)
+    parser.add_argument("--model",         type=str,  default=None)
+    parser.add_argument("--list-backends", action="store_true")
     args = parser.parse_args()
 
-    # CLI > config.toml > hardcoded default
     backend_arg = args.backend or _cfg_backend
     model_arg   = args.model   or _cfg_model
 
