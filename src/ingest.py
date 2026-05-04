@@ -30,8 +30,9 @@ META_CACHE_FILE = DATA_DIR / "pdf_metadata_cache.json"
 COLLECTION_NAME = "research_papers"
 EMBED_MODEL     = "all-MiniLM-L6-v2"
 
-CHUNK_SIZE    = 800
-CHUNK_OVERLAP = 150
+CHUNK_SIZE     = 800
+CHUNK_OVERLAP  = 150
+MIN_CHUNK_LEN  = 150  # discard tiny fragments (e.g. bibliography entries)
 
 
 def get_embedder() -> SentenceTransformer:
@@ -351,7 +352,7 @@ def chunk_text(text: str, source_meta: dict) -> list[dict]:
 
     results = []
     for i, chunk in enumerate(chunks):
-        if not chunk:
+        if not chunk or len(chunk) < MIN_CHUNK_LEN:
             continue
         doc_id = hashlib.md5(f"{source_meta['title']}_chunk_{i}".encode()).hexdigest()
         results.append({

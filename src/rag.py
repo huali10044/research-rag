@@ -22,9 +22,11 @@ Supported backends (--backend flag):
     local       TinyLlama via transformers  — (no key, slow)
 """
 
+import logging
 import os
 import re
 import json
+import time
 import tomllib
 import argparse
 from pathlib import Path
@@ -33,6 +35,7 @@ import chromadb
 from chromadb.config import Settings
 from sentence_transformers import SentenceTransformer
 
+logger = logging.getLogger(__name__)
 # ── Config ────────────────────────────────────────────────────────────────────
 DATA_DIR        = Path(__file__).parent.parent / "data"
 CHROMA_DIR      = DATA_DIR / "chroma_db"
@@ -148,9 +151,7 @@ def build_corpus_context(stats: dict, verbose: bool = True) -> str:
 
         authors = p.get("authors", "")
         if isinstance(authors, list):
-            auth_str = ", ".join(authors[:3])
-            if len(authors) > 3:
-                auth_str += " et al."
+            auth_str = ", ".join(authors)
         else:
             auth_str = authors or ""
 
@@ -237,6 +238,28 @@ def classify_query(query: str) -> str:
 
 # ── Retrieval ─────────────────────────────────────────────────────────────────
 
+def _extract_proper_noun_phrases(text: str) -> list[str]:
+    """Return sequences of 2+ consecutive title-case words (likely person names)."""
+    tokens = text.split()
+    phrases, i = [], 0
+    while i < len(tokens):
+        word = tokens[i].rstrip("?,.")
+        if i > 0 and word and word[0].isupper() and word.replace("-", "").isalpha():
+            j = i
+            while j < len(tokens):
+                w = tokens[j].rstrip("?,.")
+                if w and w[0].isupper() and w.replace("-", "").isalpha():
+                    j += 1
+                else:
+                    break
+            if j - i >= 2:
+                phrases.append(" ".join(t.rstrip('?.,') for t in tokens[i:j]))
+            i = j
+        else:
+            i += 1
+    return phrases
+
+
 def retrieve(query: str, embedder: SentenceTransformer, collection, top_k: int = TOP_K) -> list[dict]:
     """Raw vector search — returns top_k chunks sorted by similarity."""
     query_embedding = embedder.encode([query], device="cpu")[0].tolist()
@@ -256,56 +279,105 @@ def retrieve(query: str, embedder: SentenceTransformer, collection, top_k: int =
             "metadata":   meta,
             "similarity": round(1 - dist, 4),
         })
+    logger.debug("chunks=" + str(chunks))
     return chunks
+
+
+MIN_CHUNK_LEN = 120  # discard page-header/footer fragments shorter than this
 
 
 def _retrieve_deduped(
     query: str, embedder: SentenceTransformer, collection, top_k: int
 ) -> list[dict]:
     """
-    Retrieve top_k chunks with adaptive per-paper limits based on similarity distribution.
+    Retrieve top_k diverse chunks with per-paper caps.
 
-    A paper whose best chunk falls within SIMILARITY_GAP of the top score is treated as
-    co-dominant and may contribute up to top_k chunks (no effective cap). Papers further
-    below the top score are capped at FALLBACK_CAP chunks to preserve result diversity.
-
-    Effect:
-    - Single-topic query (one paper dominates) → that paper fills all top_k slots.
-    - Multi-topic query (several papers close in score) → each gets its fair share.
+    Pipeline:
+      1. Fetch a large candidate pool.
+      2. Drop exact-text duplicates.
+      3. Drop chunks shorter than MIN_CHUNK_LEN (page headers / reference noise).
+      4. Apply per-paper cap so no single paper monopolizes results.
     """
-    SIMILARITY_GAP = 0.15   # papers within this margin of top score are unrestricted
-    FALLBACK_CAP   = 2      # cap for papers outside the dominant band
+    SIMILARITY_GAP = 0.10   # margin to be treated as co-dominant
+    DOMINANT_CAP   = 2      # max chunks from any single paper (even top-ranked)
+    FALLBACK_CAP   = 1      # max chunks for papers outside the dominant band
 
-    raw = retrieve(query, embedder, collection, top_k=min(top_k * 4, 40))
+    raw = retrieve(query, embedder, collection, top_k=min(top_k * 8, 80))
     if not raw:
         return []
 
-    # Group by paper; track each paper's best (first) similarity score
-    papers: dict[str, float] = {}
+    # 1. Remove exact-text duplicates
+    seen_text: set[str] = set()
+    deduped = []
     for chunk in raw:
+        if chunk["text"] not in seen_text:
+            seen_text.add(chunk["text"])
+            deduped.append(chunk)
+
+    # 2. Drop short noise chunks (page headers, reference list fragments, etc.)
+    meaningful = [c for c in deduped if len(c["text"].strip()) >= MIN_CHUNK_LEN]
+    if not meaningful:
+        meaningful = deduped  # fall back if everything is short
+
+    logger.debug(
+        "deduped=%d meaningful=%d (dropped %d short)",
+        len(deduped), len(meaningful), len(deduped) - len(meaningful),
+    )
+
+    # 3. Group by paper; track each paper's best (first) similarity score
+    papers: dict[str, float] = {}
+    for chunk in meaningful:
         title = chunk["metadata"].get("title", "")
         if title not in papers:
-            papers[title] = chunk["similarity"]  # raw is sorted descending
+            papers[title] = chunk["similarity"]
 
-    if len(papers) == 1:
-        return raw[:top_k]
-
-    top_score = raw[0]["similarity"]
+    top_score = meaningful[0]["similarity"]
     caps = {
-        title: top_k if (top_score - best) <= SIMILARITY_GAP else FALLBACK_CAP
+        title: DOMINANT_CAP if (top_score - best) <= SIMILARITY_GAP else FALLBACK_CAP
         for title, best in papers.items()
     }
 
-    seen:  dict[str, int] = {}
+    # 4. Apply caps
+    seen_count: dict[str, int] = {}
     result = []
-    for chunk in raw:
+    for chunk in meaningful:
         title = chunk["metadata"].get("title", "")
-        count = seen.get(title, 0)
+        count = seen_count.get(title, 0)
         if count < caps[title]:
             result.append(chunk)
-            seen[title] = count + 1
+            seen_count[title] = count + 1
         if len(result) >= top_k:
             break
+
+    logger.debug("final chunks=%d", len(result))
+
+    # 5. Keyword supplement: for proper noun phrases in the query (e.g. person names),
+    #    do a keyword-filtered vector search and append any chunks not already in the
+    #    result. This handles queries like "did Jeff Lau coauthor?" where the vector
+    #    similarity between the question and an author-list chunk is too low to survive
+    #    the cap logic above.
+    phrases = _extract_proper_noun_phrases(query)
+    if phrases:
+        query_embedding = embedder.encode([query], device="cpu")[0].tolist()
+        existing = {(c["metadata"].get("source"), c["metadata"].get("chunk_index"))
+                    for c in result}
+        for phrase in phrases:
+            try:
+                kw = collection.query(
+                    query_embeddings=[query_embedding],
+                    where_document={"$contains": phrase},
+                    n_results=3,
+                    include=["documents", "metadatas", "distances"],
+                )
+                for doc, meta, dist in zip(kw["documents"][0], kw["metadatas"][0], kw["distances"][0]):
+                    key = (meta.get("source"), meta.get("chunk_index"))
+                    if key not in existing and len(doc.strip()) >= MIN_CHUNK_LEN:
+                        existing.add(key)
+                        result.append({"text": doc, "metadata": meta,
+                                       "similarity": round(1 - dist, 4)})
+            except Exception:
+                pass
+
     return result
 
 
@@ -335,9 +407,11 @@ def adaptive_retrieve(
         extra  = build_corpus_context(stats, verbose=False) if stats else ""
         return chunks, query_type, extra
 
-    # content
+    # content — also inject corpus metadata so the LLM can fall back to it
+    # (e.g. bibliography chunks retrieved by vector search + author list = enough to answer coauthor questions)
     chunks = _retrieve_deduped(query, embedder, collection, top_k)
-    return chunks, query_type, ""
+    extra  = build_corpus_context(stats, verbose=False) if stats else ""
+    return chunks, query_type, extra
 
 
 # ── Context and prompt assembly ───────────────────────────────────────────────
@@ -534,8 +608,49 @@ def resolve_backend(requested: str) -> tuple[str, str]:
     return requested, cfg["default_model"]
 
 
+def _is_retriable(exc: Exception) -> bool:
+    msg = str(exc)
+    return any(tok in msg for tok in ("503", "UNAVAILABLE", "429", "overload", "high demand", "rate limit"))
+
+
+def _available_backends() -> list[str]:
+    return [
+        name for name in AUTO_ORDER
+        if BACKENDS[name]["env_key"] is None or os.environ.get(BACKENDS[name]["env_key"])
+    ]
+
+
 def generate_answer(query: str, context: str, backend: str, model: str) -> str:
-    return _BACKEND_FN[backend](query, context, model)
+    last_exc: Exception | None = None
+    for attempt in range(3):
+        try:
+            return _BACKEND_FN[backend](query, context, model)
+        except Exception as e:
+            if _is_retriable(e) and attempt < 2:
+                time.sleep(2 ** attempt)
+                last_exc = e
+                continue
+            if not _is_retriable(e):
+                raise
+            last_exc = e
+            break
+
+    # Retries exhausted — try other available backends in priority order
+    tried = {backend}
+    for fallback in _available_backends():
+        if fallback in tried or fallback == "local":
+            continue
+        tried.add(fallback)
+        fallback_model = BACKENDS[fallback]["default_model"]
+        try:
+            result = _BACKEND_FN[fallback](query, context, fallback_model)
+            return f"*({backend} unavailable, answered via {fallback})*\n\n{result}"
+        except Exception:
+            continue
+
+    if last_exc:
+        raise last_exc
+    return answer_local(query, context, BACKENDS["local"]["default_model"])
 
 
 # ── High-level interface ──────────────────────────────────────────────────────
