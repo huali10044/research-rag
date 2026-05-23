@@ -34,6 +34,7 @@ jobs:
       contents: write
     env:
       APP_URL: "https://research-rag-kscmkbeedwcd9nlb9vit8l.streamlit.app/"
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
