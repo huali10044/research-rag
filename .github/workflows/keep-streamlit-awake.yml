@@ -9,7 +9,7 @@
 
 name: Keep Streamlit app awake
 
-on:å
+on:
   schedule:
     # Every 6 hours. Streamlit only sleeps after ~12h of no traffic, so this
     # gives two pings per sleep window with margin to spare. This cadence is
