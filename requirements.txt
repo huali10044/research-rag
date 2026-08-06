@@ -1,3 +1,12 @@
+# For a reproducible environment (exact versions this app was built/tested
+# against), install requirements-lock.txt instead:
+#   pip install -r requirements-lock.txt
+# Note: the lock file was generated via `pip freeze` on macOS and is meant for
+# local dev reproducibility. It is not platform-tagged, so a couple of pins
+# (e.g. torch, chromadb's compiled deps) may not resolve identically on
+# Linux/Windows. Streamlit Cloud deploys from this file (requirements.txt),
+# not the lock file.
+
 # Core RAG stack
 chromadb>=0.4.22
 sentence-transformers>=2.6.0

@@ -39,5 +39,8 @@ Thumbs.db
 *.log
 
 # Test artifacts
-test
 data/papers/
+
+# Internal design docs (not for public release)
+docs/revision-plan.md
+docs/PUBLIC_RELEASE_CLEANUP_PLAN.md

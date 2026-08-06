@@ -24,7 +24,7 @@ A retrieval-augmented generation (RAG) system that lets you ask questions about 
 
 ```bash
 # 1. Clone and create environment
-git clone https://github.com/YOUR_USERNAME/research-rag.git
+git clone https://github.com/huali10044/research-rag.git
 cd research-rag
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
@@ -52,6 +52,10 @@ python src/rag.py --interactive
 # Or launch the web UI
 streamlit run app.py
 ```
+
+## Note on the vector store
+
+`data/chroma_db/` (along with `data/corpus_stats.json` and `data/pdf_metadata_cache.json`) is committed to this repo rather than gitignored. That's intentional: this app deploys straight to Streamlit Cloud with no separate build/ingest step, so the vector store needs to already be present in the repo for the deployed app to work. If you fork this and add your own papers, just re-run `python src/ingest.py --reset` locally and commit the regenerated files.
 
 ## Project structure
 
@@ -124,15 +128,6 @@ Query
 3. **ChromaDB** — in-process persistence means zero ops cost for a demo. Production upgrade path: Pinecone, Weaviate, or pgvector.
 4. **Metadata filtering** — ChromaDB supports filtering by year, venue, keyword. Not yet exposed in the UI — good next feature.
 5. **Similarity threshold** — currently returns top-k regardless of score. Adding a min-similarity cutoff (~0.3) prevents hallucination from off-topic queries.
-
-## Next improvements (good interview talking points)
-
-- [ ] Hybrid search: combine BM25 lexical with semantic similarity (reciprocal rank fusion)
-- [ ] Query rewriting: use LLM to expand/rephrase the query before retrieval
-- [ ] Re-ranking: use a cross-encoder to re-rank retrieved chunks for precision
-- [ ] Metadata filters: expose year/venue filter in the UI
-- [ ] Evaluation: RAGAS framework for retrieval + faithfulness + answer relevance scores
-- [ ] Citation graph: build a network of papers connected by shared themes
 
 ## Portfolio deployment
 
