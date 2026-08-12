@@ -1,0 +1,30 @@
+# Eval configuration — mirrors config.toml in the repo root (used by app.py).
+# Non-secret defaults live here and are safe to commit.
+#
+# API keys go in eval/secrets.toml instead (gitignored). Copy
+# eval/secrets.toml.example to eval/secrets.toml and fill in the keys you have.
+# Any key already exported in your shell takes precedence over this file.
+#
+# All values here are overridable on the command line, e.g.:
+#   python eval/run_eval.py --backend anthropic --judge-backend gemini
+
+[llm]
+# Generator backend used to answer golden-set questions.
+# Options: gemini, anthropic, groq, mistral, openrouter, cohere, ollama, local, auto
+backend = "gemini"
+
+# Model override. Leave empty ("") to use the backend's default model.
+model = "gemini-2.5-flash-lite"
+
+[judge]
+# RAGAS judge backend. "auto" prefers a backend different from the generator
+# (see README.md "Judge independence") — set explicitly to pin one.
+# Options: auto, gemini, anthropic, openai
+backend = "auto"
+model = ""
+
+[eval]
+top_k = 5
+track = "all"      # all | rag | exact
+max_workers = 1    # RAGAS parallelism — keep at 1 for free-tier judges
+throttle = 1.0     # seconds between generation calls

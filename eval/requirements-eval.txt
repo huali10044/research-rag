@@ -1,0 +1,26 @@
+# Evaluation-only dependencies. Kept separate from requirements.txt so the
+# deployed Streamlit app stays lean — RAGAS pulls in a large dependency tree
+# that the app itself never needs.
+#
+#   pip install -r eval/requirements-eval.txt
+
+# Pinned deliberately. ragas changed its public API between 0.1 and 0.2
+# (Dataset -> EvaluationDataset, snake_case metric instances -> metric classes),
+# and again in 0.4. This harness targets the 0.2 API.
+ragas==0.2.15
+
+# ragas 0.2.x imports ChatVertexAI from langchain_community, which was removed
+# in later releases. Without this pin you get:
+#   ModuleNotFoundError: No module named 'langchain_community.chat_models.vertexai'
+langchain-community==0.3.9
+langchain-core>=0.3.0,<0.4.0
+
+# Judge LLM — install only the one you use.
+langchain-google-genai>=2.0.0    # gemini judge (free tier)
+# langchain-openai>=0.2.0        # openai judge
+# langchain-anthropic>=0.3.0     # anthropic judge
+
+# Already required by the main app, listed here so eval can run standalone.
+sentence-transformers>=2.6.0
+chromadb>=0.4.22
+pandas>=2.0.0
