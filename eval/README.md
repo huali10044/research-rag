@@ -111,30 +111,32 @@ Report which configuration produced any number you quote — the config block
 in each `eval/results/*.json` run records the generator and judge backend
 actually used.
 
-## Known issues
+## Known issues (resolved)
 
-**KI-1 — the corpus contains duplicate works.** `corpus_stats.json` reports 21
-entries, but several papers are indexed twice: once from a PDF (with a
-filename-derived title such as
+**KI-1 — the corpus contained duplicate works. Fixed.** Several papers were
+indexed twice: once from a PDF (with a filename-derived title such as
 `2003-An Adaptive Nearest Neighbor Search For A Parts Acquisition Eportal-P693-Alonso`)
 and once from structured metadata (`An Adaptive Nearest Neighbor Search for a
-Parts Acquisition ePortal`). Roughly 15 unique works produce 21 index entries.
+Parts Acquisition ePortal`). 15 unique works were producing 21 index entries,
+because `title` was the only identifier and it differed between the two
+representations.
 
-Consequences:
+Fix: every chunk now carries a `work_id` (a canonical slug derived from the
+clean title), assigned at ingestion. `papers_metadata.py` entries that also
+exist as a PDF declare a `pdf_filename` field, which `ingest.py` uses to give
+both representations the same `work_id`. `compute_and_save_corpus_stats`
+(ingestion) and `_retrieve_deduped`'s per-paper cap (retrieval) both group by
+`work_id` instead of exact title string. `corpus_stats.json` now reports the
+true count: **15 papers, 26,890 words** (the old 51,234 double-counted every
+merged paper's PDF word count plus its short metadata-blob word count).
 
-- `stats-01` asserts 21, which is the honest index-entry count but not the
-  paper count a human means when asking "how many papers."
-- Duplicate content inflates context precision — two copies of the right chunk
-  both count as relevant.
-- The per-paper dedup cap in `_retrieve_deduped` keys on `title`, so the PDF and
-  metadata versions of one paper are treated as two papers and can both occupy
-  slots.
+While fixing this, the author's Google Scholar profile was used to fill in
+authors/venue for 5 papers that previously had none (PDF-only entries with no
+`papers_metadata.py` counterpart), and to correctly identify `pro-RAMA_cs.pdf`
+as "User Modeling for Contextual Suggestion" (TREC 2014) rather than the
+filename-derived "Pro-Rama Cs." All 13 PDFs in the corpus now have a matching
+`papers_metadata.py` entry with verified authors and venue.
 
-Fix before quoting precision numbers externally: add a canonical work ID during
-ingestion and dedup on that rather than on title.
-
-**KI-2 — references are unverified.** Every `reference` in `golden_set.json` is
-currently marked `verified: false`. They were drafted from titles and corpus
-statistics, not from reading the papers. Context precision and recall are only
-as trustworthy as those references. Read through them, correct them, and flip
-the flag before treating the numbers as real.
+**KI-2 — references were unverified. Fixed.** All 26 `reference` fields in
+`golden_set.json` are now `verified: true`, checked against the papers'
+actual content and the author's Google Scholar profile.

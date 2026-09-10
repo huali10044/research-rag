@@ -205,6 +205,10 @@ _METADATA_PATTERNS = [
     r"\b(author|authors) of\b",
     r"\bpublished (in|at|by)\b",
     r"\b(venue|conference|journal) (for|of)\b",
+    # "what venue published X" / "which conference published X" — venue is the
+    # subject of "published" rather than its object, so the two patterns above
+    # (which expect "published in/at/by ..." or "venue for/of ...") don't match.
+    r"\b(venue|conference|journal) (published|presented)\b",
     r"\bwhere was\b",
     r"\bdoi\b",
 ]
@@ -330,28 +334,39 @@ def _retrieve_deduped(
         len(deduped), len(meaningful), len(deduped) - len(meaningful),
     )
 
-    # 3. Group by paper; track each paper's best (first) similarity score
+    # 3. Group by paper; track each paper's best (first) similarity score.
+    #    Grouping key is work_id, not title (see KI-1 in eval/README.md): the same
+    #    paper can be indexed twice — once from a raw PDF with a filename-derived
+    #    title, once from papers_metadata.py with a clean title — and title-based
+    #    grouping treated those as two different papers, letting one work occupy
+    #    multiple per-paper cap budgets. work_id is assigned at ingestion and shared
+    #    between both representations. Chunks indexed before this fix have no
+    #    work_id, so fall back to title for those.
+    def _work_key(chunk: dict) -> str:
+        meta = chunk["metadata"]
+        return meta.get("work_id") or meta.get("title", "")
+
     papers: dict[str, float] = {}
     for chunk in meaningful:
-        title = chunk["metadata"].get("title", "")
-        if title not in papers:
-            papers[title] = chunk["similarity"]
+        key = _work_key(chunk)
+        if key not in papers:
+            papers[key] = chunk["similarity"]
 
     top_score = meaningful[0]["similarity"]
     caps = {
-        title: DOMINANT_CAP if (top_score - best) <= SIMILARITY_GAP else FALLBACK_CAP
-        for title, best in papers.items()
+        key: DOMINANT_CAP if (top_score - best) <= SIMILARITY_GAP else FALLBACK_CAP
+        for key, best in papers.items()
     }
 
     # 4. Apply caps
     seen_count: dict[str, int] = {}
     result = []
     for chunk in meaningful:
-        title = chunk["metadata"].get("title", "")
-        count = seen_count.get(title, 0)
-        if count < caps[title]:
+        key = _work_key(chunk)
+        count = seen_count.get(key, 0)
+        if count < caps[key]:
             result.append(chunk)
-            seen_count[title] = count + 1
+            seen_count[key] = count + 1
         if len(result) >= top_k:
             break
 
