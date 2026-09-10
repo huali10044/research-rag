@@ -177,7 +177,10 @@ def _call_extraction_llm(prompt: str) -> str | None:
             from google import genai
             client   = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
             response = client.models.generate_content(
-                model="gemini-2.0-flash-lite",
+                # gemini-2.0-flash-lite was deprecated by Google; gemini-3.6-flash
+                # is the current replacement (same fix applied to rag.py's
+                # BACKENDS["gemini"] and eval/run_eval.py's judge builder).
+                model="gemini-3.6-flash",
                 contents=prompt,
             )
             return response.text
@@ -205,7 +208,10 @@ def _call_extraction_llm(prompt: str) -> str | None:
                 base_url="https://api.groq.com/openai/v1",
             )
             resp = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                # llama-3.1-8b-instant is now Groq Enterprise-only; openai/gpt-oss-20b
+                # is the current free-tier default (same fix applied to rag.py's
+                # BACKENDS["groq"]).
+                model="openai/gpt-oss-20b",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=512,
             )
