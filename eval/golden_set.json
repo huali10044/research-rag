@@ -33,7 +33,7 @@
       "expected_type": "stats",
       "reference": "The earliest papers date from 2003.",
       "must_contain": ["2003"],
-      "verified": false
+      "verified": true
     },
     {
       "id": "stats-03",
@@ -41,7 +41,7 @@
       "expected_type": "stats",
       "reference": "The corpus spans 2003 through 2015.",
       "must_contain": ["2003", "2015"],
-      "verified": false
+      "verified": true
     },
     {
       "id": "stats-04",
@@ -57,7 +57,7 @@
       "expected_type": "stats",
       "reference": "The most recent work is the 2015 paper on user modeling of skills and expertise from resumes.",
       "must_contain": ["2015"],
-      "verified": false
+      "verified": true
     },
 
     {
@@ -66,7 +66,7 @@
       "expected_type": "listing",
       "reference": "The 2012 papers are: Discovering Virtual Interest Groups across Chat Rooms; Managing Analysis Context; and Opaque Attribute Alignment.",
       "must_contain": ["Virtual Interest Groups", "Opaque Attribute Alignment"],
-      "verified": false
+      "verified": true
     },
     {
       "id": "list-02",
@@ -91,7 +91,7 @@
       "expected_type": "metadata",
       "reference": "The authors are Rafael Alonso, Jeffrey A. Bloom, Hua Li, and Chumki Basu. It appeared at the 9th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD 2003).",
       "must_contain": ["Alonso", "Bloom", "Basu"],
-      "verified": false
+      "verified": true
     },
     {
       "id": "meta-02",
@@ -99,7 +99,7 @@
       "expected_type": "metadata",
       "reference": "Opaque Attribute Alignment appeared at the IEEE 28th International Conference on Data Engineering in 2012.",
       "must_contain": ["Data Engineering"],
-      "verified": false
+      "verified": true
     },
     {
       "id": "meta-03",
@@ -107,7 +107,7 @@
       "expected_type": "metadata",
       "reference": "The authors are Hua Li, Hector Munoz-Avila, Diane Bramsen, Chad Hogg, and Rafael Alonso. It appeared at the 8th International Conference on Case-Based Reasoning (ICCBR 2009).",
       "must_contain": ["Hogg", "Bramsen"],
-      "verified": false
+      "verified": true
     },
     {
       "id": "meta-04",
@@ -115,7 +115,7 @@
       "expected_type": "metadata",
       "reference": "It was published at the IEEE Military Communications Conference (MILCOM) in 2014.",
       "must_contain": ["MILCOM"],
-      "verified": false
+      "verified": true
     },
     {
       "id": "meta-05",
@@ -123,7 +123,7 @@
       "expected_type": "content",
       "reference": "Yes. Jennifer Sleeman is a coauthor of Opaque Attribute Alignment (IEEE ICDE, 2012), along with Rafael Alonso, Hua Li, Art Pope, and others.",
       "must_contain": ["Opaque Attribute Alignment"],
-      "verified": false,
+      "verified": true,
       "notes": "Exercises the proper-noun keyword-supplement path in _retrieve_deduped."
     },
 
@@ -133,7 +133,7 @@
       "expected_type": "content",
       "reference": "The approach combines value function approximation with case-based reasoning to predict the timing and location of events, fusing geographic and non-geographic data sources.",
       "must_contain": [],
-      "verified": false
+      "verified": true
     },
     {
       "id": "cont-02",
@@ -141,7 +141,7 @@
       "expected_type": "content",
       "reference": "The insight is that semantically similar attributes tend to have similar data distributions or densities, so distributional comparison — using kernel density estimation — can align attributes even when their names and schemas are opaque.",
       "must_contain": [],
-      "verified": false
+      "verified": true
     },
     {
       "id": "cont-03",
@@ -149,7 +149,7 @@
       "expected_type": "content",
       "reference": "The system monitors multiple concurrent chat rooms in real time, builds user interest models from conversational activity using NLP and topic modeling, and clusters users with overlapping interests into virtual interest groups so that relevant information can be recommended across rooms.",
       "must_contain": [],
-      "verified": false
+      "verified": true
     },
     {
       "id": "cont-04",
@@ -157,7 +157,7 @@
       "expected_type": "content",
       "reference": "It adapts a nearest-neighbor similarity search to user feedback so that the retrieval of substitute or obsolete parts improves over time, learning which attribute dimensions matter for judging part similarity.",
       "must_contain": [],
-      "verified": false
+      "verified": true
     },
     {
       "id": "cont-05",
@@ -165,7 +165,7 @@
       "expected_type": "content",
       "reference": "The 2005 work examines how analyst cognitive biases such as confirmation bias distort information seeking and retrieval, and proposes system-side mechanisms to counteract them during search.",
       "must_contain": [],
-      "verified": false
+      "verified": true
     },
     {
       "id": "cont-06",
@@ -173,7 +173,7 @@
       "expected_type": "content",
       "reference": "An adaptive model of each mobile user's interests drives content prefetching and peer-to-peer sharing at the network edge, reducing response time and increasing data availability in bandwidth-constrained mobile ad hoc networks.",
       "must_contain": [],
-      "verified": false
+      "verified": true
     },
     {
       "id": "cont-07",
@@ -181,7 +181,7 @@
       "expected_type": "content",
       "reference": "The work presents an algorithm that takes a resume as input and produces an expertise model expressing both the types of skills present and the level of competency in each, rather than treating skills as a flat keyword list.",
       "must_contain": [],
-      "verified": false
+      "verified": true
     },
     {
       "id": "cont-08",
@@ -189,7 +189,7 @@
       "expected_type": "content",
       "reference": "The approach updates a user interest model incrementally as different behavior types arrive, combining heterogeneous signals into a single evolving interest representation rather than requiring batch retraining.",
       "must_contain": [],
-      "verified": false
+      "verified": true
     },
     {
       "id": "cont-09",
@@ -197,7 +197,7 @@
       "expected_type": "content",
       "reference": "It addresses malicious mobile agents by building behavioral profiles of agent activity and detecting agents whose behavior deviates from the expected profile.",
       "must_contain": [],
-      "verified": false
+      "verified": true
     },
     {
       "id": "cont-10",
@@ -205,7 +205,7 @@
       "expected_type": "content",
       "reference": "The Managing Analysis Context work treats an analyst's working context as a first-class object that can be captured, maintained, and used to prioritize and recommend information relevant to the current investigative task.",
       "must_contain": [],
-      "verified": false
+      "verified": true
     },
     {
       "id": "cont-11",
@@ -213,7 +213,7 @@
       "expected_type": "content",
       "reference": "Across the corpus, user modeling recurs as the mechanism for personalization: interest models are built from observed behavior and then used to drive recommendation, retrieval prioritization, content prefetching, collaboration discovery, and expertise assessment across domains ranging from e-procurement to intelligence analysis to mobile networks.",
       "must_contain": [],
-      "verified": false,
+      "verified": true,
       "notes": "Cross-paper synthesis — stresses the per-paper deduplication cap."
     },
 
@@ -223,7 +223,7 @@
       "expected_type": "content",
       "reference": "The corpus does not cover transformer architectures. The papers span 2003 to 2015 and predate the transformer, so no grounded answer is available from these sources.",
       "must_contain": [],
-      "verified": false,
+      "verified": true,
       "notes": "Adversarial out-of-scope probe. A well-behaved system should decline rather than invent. Low faithfulness here means the system hallucinates under pressure."
     },
     {
@@ -232,7 +232,7 @@
       "expected_type": "content",
       "reference": "The corpus does not contain information about best paper awards, so this cannot be answered from the available sources.",
       "must_contain": [],
-      "verified": false,
+      "verified": true,
       "notes": "Second adversarial probe — plausible-sounding question with no grounding."
     }
   ]

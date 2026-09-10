@@ -52,15 +52,19 @@ AUTO_ORDER = ["gemini", "groq", "mistral", "openrouter", "cohere", "anthropic", 
 BACKENDS = {
     "gemini": {
         "env_key":       "GEMINI_API_KEY",
-        "default_model": "gemini-2.0-flash",
+        "default_model": "gemini-3.6-flash",
         "free_tier":     True,
-        "notes":         "Free tier (15 RPM, 1M tokens/day). Get key at aistudio.google.com",
+        "notes":         "Free tier (15 RPM, 1M tokens/day). gemini-2.0-flash was deprecated by "
+                         "Google; gemini-3.6-flash is the current replacement per the API's own "
+                         "404 message. Get key at aistudio.google.com",
     },
     "groq": {
         "env_key":       "GROQ_API_KEY",
-        "default_model": "llama-3.1-8b-instant",
+        "default_model": "openai/gpt-oss-20b",
         "free_tier":     True,
-        "notes":         "Free tier (rate-limited). Get key at console.groq.com",
+        "notes":         "Free tier (rate-limited). llama-3.1-8b-instant was deprecated by Groq; "
+                         "openai/gpt-oss-20b is the current free-tier equivalent. "
+                         "Get key at console.groq.com",
     },
     "mistral": {
         "env_key":       "MISTRAL_API_KEY",
@@ -76,9 +80,11 @@ BACKENDS = {
     },
     "cohere": {
         "env_key":       "COHERE_API_KEY",
-        "default_model": "command-r",
+        "default_model": "command-r7b-12-2024",
         "free_tier":     True,
-        "notes":         "Free trial key. Get key at dashboard.cohere.com",
+        "notes":         "Free trial key (20 req/min, 1000 calls/month). command-r was "
+                         "removed by Cohere on 2025-09-15; command-r7b-12-2024 is the "
+                         "current lightweight replacement. Get key at dashboard.cohere.com",
     },
     "ollama": {
         "env_key":       None,

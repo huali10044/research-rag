@@ -232,11 +232,21 @@ def score_exact_track(records: list[dict]) -> dict[str, Any]:
 # track and the exact track. That's a different failure mode than "retrieval
 # got worse" or "the assertion failed," so it's tracked across *all* records
 # (not just stats/listing) and reported on its own, independent of --track.
+#
+# Records where generation errored (e.g. a 429) are excluded entirely: those
+# are an availability failure of the generator/judge API, not a classify_query
+# decision, and adaptive_answer never got far enough to route anything. Folding
+# them into "mismatches" would blame routing for an outage — exactly the
+# confusion this metric exists to avoid. They're reported separately as
+# "errored" so an outage during a run is visible without being misattributed.
 
 def score_routing(records: list[dict]) -> dict[str, Any]:
+    scorable = [r for r in records if not r["error"]]
+    errored = [r["id"] for r in records if r["error"]]
+
     by_type: dict[str, dict[str, int]] = {}
     mismatches = []
-    for r in records:
+    for r in scorable:
         expected = r["expected_type"]
         bucket = by_type.setdefault(expected, {"n": 0, "correct": 0})
         bucket["n"] += 1
@@ -251,19 +261,20 @@ def score_routing(records: list[dict]) -> dict[str, Any]:
         t: round(b["correct"] / b["n"], 4) if b["n"] else None
         for t, b in by_type.items()
     }
-    n = len(records) or 1
-    overall = round(sum(r["type_match"] for r in records) / n, 4)
+    n = len(scorable) or 1
+    overall = round(sum(r["type_match"] for r in scorable) / n, 4)
 
     return {
         "overall": overall,
         "per_type": per_type,
         "mismatches": mismatches,
+        "errored": errored,
     }
 
 
 # ── Judge backend resolution ──────────────────────────────────────────────────
 
-JUDGE_ORDER = ["gemini", "anthropic", "openai"]
+JUDGE_ORDER = ["gemini", "anthropic", "openai", "cohere", "groq", "mistral"]
 
 
 def _backend_available(name: str) -> bool:
@@ -301,8 +312,9 @@ def resolve_judge_backend(requested: str, generator_backend: str) -> tuple[str, 
 
     raise EnvironmentError(
         "No judge backend available. Set one of GEMINI_API_KEY, "
-        "ANTHROPIC_API_KEY, OPENAI_API_KEY in eval/secrets.toml or the "
-        "environment, or run with --track exact to skip the judge entirely."
+        "ANTHROPIC_API_KEY, OPENAI_API_KEY, COHERE_API_KEY, GROQ_API_KEY, "
+        "MISTRAL_API_KEY in eval/secrets.toml or the environment, or run with "
+        "--track exact to skip the judge entirely."
     )
 
 
@@ -316,11 +328,12 @@ def build_judge_llm(backend: str, model: str | None):
 
     if backend == "gemini":
         from langchain_google_genai import ChatGoogleGenerativeAI
-        import os
 
         return LangchainLLMWrapper(
             ChatGoogleGenerativeAI(
-                model=model or "gemini-2.0-flash",
+                # gemini-2.0-flash was deprecated by Google; the API's own 404
+                # error names gemini-3.6-flash as the direct replacement.
+                model=model or "gemini-3.6-flash",
                 google_api_key=os.environ["GEMINI_API_KEY"],
                 temperature=0.0,
             )
@@ -340,9 +353,50 @@ def build_judge_llm(backend: str, model: str | None):
             ChatAnthropic(model=model or "claude-haiku-4-5-20251001", temperature=0.0)
         )
 
+    if backend == "cohere":
+        from langchain_cohere import ChatCohere
+
+        return LangchainLLMWrapper(
+            ChatCohere(
+                # command-r was removed by Cohere on 2025-09-15; command-r7b
+                # is the current lightweight replacement on the trial tier
+                # (20 req/min, 1000 calls/month — see docs.cohere.com/v2/docs/rate-limits).
+                model=model or "command-r7b-12-2024",
+                cohere_api_key=os.environ["COHERE_API_KEY"],
+                temperature=0.0,
+            )
+        )
+
+    # groq and mistral both expose OpenAI-compatible chat completions endpoints
+    # (same pattern rag.py's answer_with_groq / answer_with_mistral use), so
+    # ChatOpenAI with a custom base_url covers them without a new dependency.
+    if backend == "groq":
+        from langchain_openai import ChatOpenAI
+
+        return LangchainLLMWrapper(
+            ChatOpenAI(
+                model=model or "openai/gpt-oss-20b",
+                api_key=os.environ["GROQ_API_KEY"],
+                base_url="https://api.groq.com/openai/v1",
+                temperature=0.0,
+            )
+        )
+
+    if backend == "mistral":
+        from langchain_openai import ChatOpenAI
+
+        return LangchainLLMWrapper(
+            ChatOpenAI(
+                model=model or "mistral-small-latest",
+                api_key=os.environ["MISTRAL_API_KEY"],
+                base_url="https://api.mistral.ai/v1",
+                temperature=0.0,
+            )
+        )
+
     raise ValueError(
         f"Unsupported judge backend {backend!r}. "
-        "Use one of: gemini, openai, anthropic."
+        "Use one of: gemini, openai, anthropic, cohere, groq, mistral."
     )
 
 
@@ -543,6 +597,19 @@ def render_markdown(runs: list[dict]) -> str:
     if routing_failures:
         lines += ["## Routing mismatches", "", *routing_failures, ""]
 
+    errored = []
+    for run in runs:
+        ids = run["routing"].get("errored", [])
+        if ids:
+            errored.append(f"- {run['config']['label']}: {', '.join(ids)}")
+    if errored:
+        lines += [
+            "## Errored (excluded from routing accuracy and both scoring tracks)",
+            "",
+            *errored,
+            "",
+        ]
+
     failures = []
     for run in runs:
         for row in run["exact_track"]["rows"]:
@@ -641,7 +708,7 @@ def main() -> None:
     p.add_argument("--track", choices=["all", "rag", "exact"],
                    default=eval_cfg.get("track", "all"))
     p.add_argument("--judge-backend", default=judge_cfg.get("backend", "auto"),
-                   choices=["auto", "gemini", "openai", "anthropic"],
+                   choices=["auto", "gemini", "openai", "anthropic", "cohere", "groq", "mistral"],
                    help="Judge backend for RAGAS. 'auto' (default) prefers a "
                         "backend different from the generator; see eval/README.md.")
     p.add_argument("--judge-model", default=judge_cfg.get("model") or None)
