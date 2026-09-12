@@ -1,0 +1,1650 @@
+[
+  {
+    "config": {
+      "label": "top_k=12",
+      "backend": "groq",
+      "model": "openai/gpt-oss-20b",
+      "top_k": 12,
+      "judge_backend": "gemini",
+      "judge_rpm": 12,
+      "embed_model": "all-MiniLM-L6-v2"
+    },
+    "rag_track": {
+      "n": 18,
+      "skipped": [],
+      "scores": {
+        "faithfulness": 0.6567,
+        "answer_relevancy": 0.8272,
+        "llm_context_precision_with_reference": 0.6192,
+        "context_recall": 0.6389
+      },
+      "rows": [
+        {
+          "id": "meta-01",
+          "n_chunks": 13,
+          "latency_s": 27.87,
+          "faithfulness": 1.0,
+          "answer_relevancy": 0.9445,
+          "llm_context_precision_with_reference": 0.8567,
+          "context_recall": 1.0
+        },
+        {
+          "id": "meta-02",
+          "n_chunks": 14,
+          "latency_s": 24.63,
+          "faithfulness": 1.0,
+          "answer_relevancy": 0.9826,
+          "llm_context_precision_with_reference": 1.0,
+          "context_recall": 1.0
+        },
+        {
+          "id": "meta-03",
+          "n_chunks": 12,
+          "latency_s": 16.9,
+          "faithfulness": 0.7143,
+          "answer_relevancy": 0.7777,
+          "llm_context_precision_with_reference": 0.3333,
+          "context_recall": 1.0
+        },
+        {
+          "id": "meta-04",
+          "n_chunks": 12,
+          "latency_s": 25.92,
+          "faithfulness": 1.0,
+          "answer_relevancy": 0.9842,
+          "llm_context_precision_with_reference": 0.9167,
+          "context_recall": 1.0
+        },
+        {
+          "id": "meta-05",
+          "n_chunks": 13,
+          "latency_s": 22.29,
+          "faithfulness": 0.25,
+          "answer_relevancy": 0.6939,
+          "llm_context_precision_with_reference": 0.0769,
+          "context_recall": 0.5
+        },
+        {
+          "id": "cont-01",
+          "n_chunks": 12,
+          "latency_s": 25.77,
+          "faithfulness": 1.0,
+          "answer_relevancy": 0.7957,
+          "llm_context_precision_with_reference": 1.0,
+          "context_recall": 1.0
+        },
+        {
+          "id": "cont-02",
+          "n_chunks": 12,
+          "latency_s": 25.72,
+          "faithfulness": 0.75,
+          "answer_relevancy": 0.987,
+          "llm_context_precision_with_reference": 0.0,
+          "context_recall": 0.0
+        },
+        {
+          "id": "cont-03",
+          "n_chunks": 8,
+          "latency_s": 19.68,
+          "faithfulness": 0.25,
+          "answer_relevancy": 0.9958,
+          "llm_context_precision_with_reference": 0.0,
+          "context_recall": 0.0
+        },
+        {
+          "id": "cont-04",
+          "n_chunks": 12,
+          "latency_s": 28.61,
+          "faithfulness": 0.1481,
+          "answer_relevancy": 0.984,
+          "llm_context_precision_with_reference": 1.0,
+          "context_recall": 1.0
+        },
+        {
+          "id": "cont-05",
+          "n_chunks": 10,
+          "latency_s": 28.88,
+          "faithfulness": null,
+          "answer_relevancy": 0.0,
+          "llm_context_precision_with_reference": 0.0,
+          "context_recall": 0.0
+        },
+        {
+          "id": "cont-06",
+          "n_chunks": 9,
+          "latency_s": 24.34,
+          "faithfulness": 0.3333,
+          "answer_relevancy": 0.9258,
+          "llm_context_precision_with_reference": 1.0,
+          "context_recall": 0.0
+        },
+        {
+          "id": "cont-07",
+          "n_chunks": 11,
+          "latency_s": 27.15,
+          "faithfulness": 0.4615,
+          "answer_relevancy": 0.8716,
+          "llm_context_precision_with_reference": 1.0,
+          "context_recall": 0.0
+        },
+        {
+          "id": "cont-08",
+          "n_chunks": 11,
+          "latency_s": 27.54,
+          "faithfulness": 0.25,
+          "answer_relevancy": 0.9941,
+          "llm_context_precision_with_reference": 0.8875,
+          "context_recall": 1.0
+        },
+        {
+          "id": "cont-09",
+          "n_chunks": 12,
+          "latency_s": 28.15,
+          "faithfulness": 1.0,
+          "answer_relevancy": 0.6215,
+          "llm_context_precision_with_reference": 0.7,
+          "context_recall": 1.0
+        },
+        {
+          "id": "cont-10",
+          "n_chunks": 11,
+          "latency_s": 20.5,
+          "faithfulness": 0.6,
+          "answer_relevancy": 0.8863,
+          "llm_context_precision_with_reference": 1.0,
+          "context_recall": 1.0
+        },
+        {
+          "id": "cont-11",
+          "n_chunks": 12,
+          "latency_s": 28.58,
+          "faithfulness": null,
+          "answer_relevancy": 0.7601,
+          "llm_context_precision_with_reference": 0.0,
+          "context_recall": 0.0
+        },
+        {
+          "id": "adv-01",
+          "n_chunks": 12,
+          "latency_s": 25.04,
+          "faithfulness": 0.75,
+          "answer_relevancy": 0.9505,
+          "llm_context_precision_with_reference": 0.7629,
+          "context_recall": 1.0
+        },
+        {
+          "id": "adv-02",
+          "n_chunks": 12,
+          "latency_s": 27.15,
+          "faithfulness": 1.0,
+          "answer_relevancy": 0.7349,
+          "llm_context_precision_with_reference": 0.6111,
+          "context_recall": 1.0
+        }
+      ]
+    },
+    "exact_track": {
+      "n": 8,
+      "pass_rate": 1.0,
+      "type_accuracy": 1.0,
+      "rows": [
+        {
+          "id": "stats-01",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 0.9
+        },
+        {
+          "id": "stats-02",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 0.43
+        },
+        {
+          "id": "stats-03",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 0.47
+        },
+        {
+          "id": "stats-04",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 1.24
+        },
+        {
+          "id": "stats-05",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 0.53
+        },
+        {
+          "id": "list-01",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 0.77
+        },
+        {
+          "id": "list-02",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 0.94
+        },
+        {
+          "id": "list-03",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 8.98
+        }
+      ]
+    },
+    "routing": {
+      "overall": 1.0,
+      "per_type": {
+        "stats": 1.0,
+        "listing": 1.0,
+        "metadata": 1.0,
+        "content": 1.0
+      },
+      "mismatches": [],
+      "errored": []
+    },
+    "records": [
+      {
+        "id": "stats-01",
+        "query": "How many papers are in this corpus?",
+        "expected_type": "stats",
+        "actual_type": "stats",
+        "type_match": true,
+        "reference": "The corpus contains 15 papers.",
+        "must_contain": [
+          "15"
+        ],
+        "answer": "The corpus contains **15 papers**.  \nFor example, the list includes works such as *\u201cAn Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal\u201d* (2003), *\u201cCombating Cognitive Biases in Information Retrieval\u201d* (2005), *\u201cPotential IED Threat System (PITS)\u201d* (2009), and *\u201cUser Modeling of Skills and Expertise from Resumes\u201d* (2015). Each of these titles is part of the 15\u2011paper set described in the overview.",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 0.9,
+        "error": null
+      },
+      {
+        "id": "stats-02",
+        "query": "What year was the earliest paper published?",
+        "expected_type": "stats",
+        "actual_type": "stats",
+        "type_match": true,
+        "reference": "The earliest papers date from 2003.",
+        "must_contain": [
+          "2003"
+        ],
+        "answer": "The earliest papers in Dr. Hua Li\u2019s publication record are from **2003**:  \n- *An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal* (2003)  \n- *Lessons from the Implementation of an Adaptive Parts Acquisition ePortal* (2003)  \n\nThus, the earliest year of publication is **2003**.",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 0.43,
+        "error": null
+      },
+      {
+        "id": "stats-03",
+        "query": "What year range does this research span?",
+        "expected_type": "stats",
+        "actual_type": "stats",
+        "type_match": true,
+        "reference": "The corpus spans 2003 through 2015.",
+        "must_contain": [
+          "2003",
+          "2015"
+        ],
+        "answer": "The papers span a period from **2003 to 2015**.  \n- Earliest paper: *An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal* (2003).  \n- Latest paper: *User Modeling of Skills and Expertise from Resumes* (2015).",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 0.47,
+        "error": null
+      },
+      {
+        "id": "stats-04",
+        "query": "What is the total word count across all papers?",
+        "expected_type": "stats",
+        "actual_type": "stats",
+        "type_match": true,
+        "reference": "The corpus contains 26,890 words in total.",
+        "must_contain": [
+          "26"
+        ],
+        "answer": "The papers listed in the corpus sum to **26,890 words** in total.\n\n- 2003: 126\u202f+\u202f103\u202f=\u202f229 words  \n- 2005: 1,256\u202f+\u202f106\u202f=\u202f1,362 words  \n- 2006: 108 words  \n- 2009: 5,364\u202f+\u202f121\u202f=\u202f5,485 words  \n- 2010: 4,201 words  \n- 2012: 3,644\u202f+\u202f110\u202f+\u202f112\u202f=\u202f3,866 words  \n- 2013: 4,297 words  \n- 2014: 143\u202f+\u202f4,838\u202f=\u202f4,981 words  \n- 2015: 2,361 words  \n\nAdding all these amounts:  \n229\u202f+\u202f1,362\u202f+\u202f108\u202f+\u202f5,485\u202f+\u202f4,201\u202f+\u202f3,866\u202f+\u202f4,297\u202f+\u202f4,981\u202f+\u202f2,361\u202f=\u202f26,890 words.  \n\nThus, the total word count across all 15 papers is 26,890.",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 1.24,
+        "error": null
+      },
+      {
+        "id": "stats-05",
+        "query": "What is the most recent paper in the collection?",
+        "expected_type": "stats",
+        "actual_type": "stats",
+        "type_match": true,
+        "reference": "The most recent work is the 2015 paper on user modeling of skills and expertise from resumes.",
+        "must_contain": [
+          "2015"
+        ],
+        "answer": "The most recent paper in the collection is:\n\n**\u201cUser Modeling of Skills and Expertise from Resumes\u201d** (KMIS\u202f2015)  \n\nThis 2015 paper by Hua\u202fLi, Daniel\u202fJ.\u202fT.\u202fPowell, Mark\u202fClark, and Tifani\u202fO'Brien is the latest publication in the provided corpus.",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 0.53,
+        "error": null
+      },
+      {
+        "id": "list-01",
+        "query": "List all papers published in 2012.",
+        "expected_type": "listing",
+        "actual_type": "listing",
+        "type_match": true,
+        "reference": "The 2012 papers are: Discovering Virtual Interest Groups across Chat Rooms; Managing Analysis Context; and Opaque Attribute Alignment.",
+        "must_contain": [
+          "Virtual Interest Groups",
+          "Opaque Attribute Alignment"
+        ],
+        "answer": "**Papers published in 2012**\n\n- *Discovering Virtual Interest Groups across Chat Rooms* (2012) \u2013 KMIS\u202f2012  \n- *Managing Analysis Context* (2012) \u2013 12th International Workshop on Web Information and Data Management (WIDM\u202f2012)  \n- *Opaque Attribute Alignment* (2012) \u2013 IEEE\u202f28th International Conference on Data Engineering Workshops (ICDEW\u202f2012)",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 0.77,
+        "error": null
+      },
+      {
+        "id": "list-02",
+        "query": "Give me the full list of publications.",
+        "expected_type": "listing",
+        "actual_type": "listing",
+        "type_match": true,
+        "reference": "The corpus lists 15 papers spanning 2003 to 2015: An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal (2003); Lessons from the Implementation of an Adaptive Parts Acquisition ePortal (2003); Combating Cognitive Biases in Information Retrieval (2005); Model-Guided Information Discovery for Intelligence Analysis (2005); Profile-Based Security Against Malicious Mobile Agents (2006); Potential IED Threat System (PITS) (2009); Spatial Event Prediction by Combining Value Function Approximation and Case-Based Reasoning (2009); Incremental User Modeling with Heterogeneous User Behaviors (2010); Discovering Virtual Interest Groups across Chat Rooms (2012); Managing Analysis Context (2012); Opaque Attribute Alignment (2012); Discovery of Player Strategies in a Serious Game (2013); Adaptive Interest Modeling Improves Content Services at the Network Edge (2014); User Modeling for Contextual Suggestion (2014); and User Modeling of Skills and Expertise from Resumes (2015).",
+        "must_contain": [],
+        "answer": "**Full list of Dr.\u202fHua Li\u2019s publications (2003\u202f\u2013\u202f2015)**  \n\n| Year | Title |\n|------|-------|\n| 2003 | *An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal* |\n| 2003 | *Lessons from the Implementation of an Adaptive Parts Acquisition ePortal* |\n| 2005 | *Combating Cognitive Biases in Information Retrieval* |\n| 2005 | *Model\u2011Guided Information Discovery for Intelligence Analysis* |\n| 2006 | *Profile\u2011Based Security Against Malicious Mobile Agents* |\n| 2009 | *Potential IED Threat System (PITS)* |\n| 2009 | *Spatial Event Prediction by Combining Value Function Approximation and Case\u2011Based Reasoning* |\n| 2010 | *Incremental User Modeling with Heterogeneous User Behaviors* |\n| 2012 | *Discovering Virtual Interest Groups across Chat Rooms* |\n| 2012 | *Managing Analysis Context* |\n| 2012 | *Opaque Attribute Alignment* |\n| 2013 | *Discovery of Player Strategies in a Serious Game* |\n| 2014 | *Adaptive Interest Modeling Improves Content Services at the Network Edge* |\n| 2014 | *User Modeling for Contextual Suggestion* |\n| 2015 | *User Modeling of Skills and Expertise from Resumes* |\n\nThese titles correspond to the 15 papers listed in the corpus overview, covering the period from 2003 to 2015.",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 0.94,
+        "error": null
+      },
+      {
+        "id": "list-03",
+        "query": "Which papers were published before 2010?",
+        "expected_type": "listing",
+        "actual_type": "listing",
+        "type_match": true,
+        "reference": "Papers before 2010 include the 2003 parts acquisition ePortal work (and its companion lessons-learned paper), the 2005 papers on cognitive biases in information retrieval and model-guided information discovery, the 2006 profile-based security paper, and the 2009 papers on the Potential IED Threat System and spatial event prediction.",
+        "must_contain": [
+          "2003"
+        ],
+        "answer": "The papers published **before 2010** are:\n\n| Year | Title |\n|------|-------|\n| 2003 | *An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal* |\n| 2003 | *Lessons from the Implementation of an Adaptive Parts Acquisition ePortal* |\n| 2005 | *Combating Cognitive Biases in Information Retrieval* |\n| 2005 | *Model\u2011Guided Information Discovery for Intelligence Analysis* |\n| 2006 | *Profile\u2011Based Security Against Malicious Mobile Agents* |\n| 2009 | *Potential IED Threat System (PITS)* |\n| 2009 | *Spatial Event Prediction by Combining Value Function Approximation and Case\u2011Based Reasoning* |\n\nThese are all the entries in the corpus whose publication year is earlier than 2010.",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 8.98,
+        "error": null
+      },
+      {
+        "id": "meta-01",
+        "query": "Who wrote 'An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal'?",
+        "expected_type": "metadata",
+        "actual_type": "metadata",
+        "type_match": true,
+        "reference": "The authors are Rafael Alonso, Jeffrey A. Bloom, Hua Li, and Chumki Basu. It appeared at the 9th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD 2003).",
+        "must_contain": [
+          "Alonso",
+          "Bloom",
+          "Basu"
+        ],
+        "answer": "'An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal' was authored by **Rafael\u202fAlonso, Jeffrey\u202fA.\u202fBloom, Hua\u202fLi, and Chumki\u202fBasu** (see the paper presented at KDD\u202f2003 and listed in the corpus).  \n\n- The KDD\u202f2003 conference paper lists these four authors explicitly (Source\u202f2).  \n- The 2003 ACM SIGKDD proceedings also confirm the same author list (Source\u202f1).",
+        "similarities": [
+          0.6886,
+          0.6866,
+          0.6752,
+          0.6473,
+          0.6152,
+          0.6088,
+          0.5353,
+          0.513,
+          0.5031,
+          0.4949,
+          0.4859,
+          0.4343,
+          0.5973
+        ],
+        "n_chunks": 13,
+        "latency_s": 27.87,
+        "error": null
+      },
+      {
+        "id": "meta-02",
+        "query": "What venue published the Opaque Attribute Alignment paper?",
+        "expected_type": "metadata",
+        "actual_type": "metadata",
+        "type_match": true,
+        "reference": "Opaque Attribute Alignment appeared at the IEEE 28th International Conference on Data Engineering in 2012.",
+        "must_contain": [
+          "Data Engineering"
+        ],
+        "answer": "The **Opaque Attribute Alignment** paper was published in the proceedings of the **IEEE 28th International Conference on Data Engineering Workshops (ICDEW\u202f2012)**\u3010Source\u202f1\u3011.",
+        "similarities": [
+          0.592,
+          0.579,
+          0.3335,
+          0.3226,
+          0.3176,
+          0.3164,
+          0.3001,
+          0.2659,
+          0.2401,
+          0.2318,
+          0.2298,
+          0.2235,
+          0.4989,
+          0.4953
+        ],
+        "n_chunks": 14,
+        "latency_s": 24.63,
+        "error": null
+      },
+      {
+        "id": "meta-03",
+        "query": "Who are the authors of the spatial event prediction paper?",
+        "expected_type": "metadata",
+        "actual_type": "metadata",
+        "type_match": true,
+        "reference": "The authors are Hua Li, Hector Munoz-Avila, Diane Bramsen, Chad Hogg, and Rafael Alonso. It appeared at the 8th International Conference on Case-Based Reasoning (ICCBR 2009).",
+        "must_contain": [
+          "Hogg",
+          "Bramsen"
+        ],
+        "answer": "The paper **\u201cSpatial Event Prediction by Combining Value Function Approximation and Case\u2011Based Reasoning\u201d (2009)** lists the following authors:\n\n- **Hua Li**  \n- **H\u00e9ctor Mu\u00f1oz\u2011Avila**  \n- **Diane Bramsen**  \n- **Chad Hogg**  \n- **Rafael Alonso**  \n\nThis information is provided in the overview of Dr. Li\u2019s publications and is confirmed by the detailed author list in the 2009 ICCBR paper (Source\u202f1).",
+        "similarities": [
+          0.518,
+          0.5036,
+          0.4608,
+          0.363,
+          0.3618,
+          0.3194,
+          0.3006,
+          0.2923,
+          0.2918,
+          0.2884,
+          0.2562,
+          0.2336
+        ],
+        "n_chunks": 12,
+        "latency_s": 16.9,
+        "error": null
+      },
+      {
+        "id": "meta-04",
+        "query": "Where was 'Adaptive Interest Modeling Improves Content Services at the Network Edge' published?",
+        "expected_type": "metadata",
+        "actual_type": "metadata",
+        "type_match": true,
+        "reference": "It was published at the IEEE Military Communications Conference (MILCOM) in 2014.",
+        "must_contain": [
+          "MILCOM"
+        ],
+        "answer": "**Adaptive Interest Modeling Improves Content Services at the Network Edge** was published in the proceedings of the **IEEE Military Communications Conference (MILCOM 2014)**\u3010Source\u00a02\u3011\u3010Source\u00a03\u3011.",
+        "similarities": [
+          0.7044,
+          0.7003,
+          0.6514,
+          0.5203,
+          0.471,
+          0.4255,
+          0.414,
+          0.4038,
+          0.3944,
+          0.3758,
+          0.3755,
+          0.3664
+        ],
+        "n_chunks": 12,
+        "latency_s": 25.92,
+        "error": null
+      },
+      {
+        "id": "meta-05",
+        "query": "Did Jennifer Sleeman coauthor any of these papers?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "Yes. Jennifer Sleeman is a coauthor of Opaque Attribute Alignment (IEEE ICDE, 2012), along with Rafael Alonso, Hua Li, Art Pope, and others.",
+        "must_contain": [
+          "Opaque Attribute Alignment"
+        ],
+        "answer": "Yes. Jennifer\u202fSleeman is listed as a co\u2011author on the 2012 paper **\u201cOpaque Attribute Alignment\u201d** (IEEE\u202f28th International Conference on Data Engineering Workshops, 2012). The paper\u2019s author list includes Jennifer\u202fSleeman, Rafael\u202fAlonso, Hua\u202fLi, Art\u202fPope, and Antonio\u202fBadia\u3010Source\u202f13\u3011\u3010Source\u202f2\u3011. No other papers in Dr.\u202fHua\u202fLi\u2019s publication list include her name.",
+        "similarities": [
+          0.2725,
+          0.2515,
+          0.2446,
+          0.2293,
+          0.2156,
+          0.2064,
+          0.202,
+          0.1985,
+          0.1972,
+          0.187,
+          0.1789,
+          0.1749,
+          0.1153
+        ],
+        "n_chunks": 13,
+        "latency_s": 22.29,
+        "error": null
+      },
+      {
+        "id": "cont-01",
+        "query": "What approach was used for spatial event prediction?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The approach combines value function approximation with case-based reasoning to predict the timing and location of events, fusing geographic and non-geographic data sources.",
+        "must_contain": [],
+        "answer": "The 2009 study **\u201cSpatial Event Prediction by Combining Value Function Approximation and Case\u2011Based Reasoning\u201d** (ICCBR\u202f2009) introduced a hybrid approach for predicting spatial events.  \nIt combines:\n\n1. **Reinforcement\u2011learning value\u2011function approximation** \u2013 the system learns a predictive model of future event locations from historical data, and\n2. **Case\u2011based reasoning** \u2013 it retrieves and re\u2011uses similar past spatial\u2011event cases to refine the prediction under uncertainty.\n\nThus, spatial event prediction in this work is achieved through a fusion of value\u2011function approximation and case\u2011based reasoning.",
+        "similarities": [
+          0.594,
+          0.5803,
+          0.5097,
+          0.4668,
+          0.3491,
+          0.3421,
+          0.329,
+          0.327,
+          0.31,
+          0.2999,
+          0.2559,
+          0.2234
+        ],
+        "n_chunks": 12,
+        "latency_s": 25.77,
+        "error": null
+      },
+      {
+        "id": "cont-02",
+        "query": "What is the core idea behind opaque attribute alignment?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The insight is that semantically similar attributes tend to have similar data distributions or densities, so distributional comparison \u2014 using kernel density estimation \u2014 can align attributes even when their names and schemas are opaque.",
+        "must_contain": [],
+        "answer": "The core idea of **opaque attribute alignment** is to match attributes across heterogeneous data sources when the attributes\u2019 semantics are not explicitly documented or interpreted.  \nInstead of relying on semantic descriptions, the method treats each attribute as an \u201copaque\u201d object and discovers correspondences using **statistical** and **structural** techniques (e.g., distributional similarity, value patterns, schema topology). This enables data integration for sources that lack clear schema definitions or ontology annotations.  \n\n*See: \u201cOpaque Attribute Alignment\u201d (2012) \u2013 IEEE\u202f28th International Conference on Data Engineering Workshops.*",
+        "similarities": [
+          0.6791,
+          0.6637,
+          0.3099,
+          0.2686,
+          0.2611,
+          0.247,
+          0.2385,
+          0.2227,
+          0.2215,
+          0.2154,
+          0.2139,
+          0.2104
+        ],
+        "n_chunks": 12,
+        "latency_s": 25.72,
+        "error": null
+      },
+      {
+        "id": "cont-03",
+        "query": "How are virtual interest groups discovered across chat rooms?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The system monitors multiple concurrent chat rooms in real time, builds user interest models from conversational activity using NLP and topic modeling, and clusters users with overlapping interests into virtual interest groups so that relevant information can be recommended across rooms.",
+        "must_contain": [],
+        "answer": "Virtual interest groups (VIGs) are discovered by first constructing an adaptive, user\u2011specific interest model from the messages a user sends or receives in chat rooms, and then grouping users whose models are similar enough that they are likely to share a common topic of interest. The process is described in **\u201cDiscovering Virtual Interest Groups across Chat Rooms\u201d (2012)** and is grounded in the incremental user\u2011modeling work of **\u201cIncremental User Modeling with Heterogeneous User Behaviors\u201d (2010)**.\n\n### 1.  Data collection\n* All text exchanged in the target chat rooms (e.g., XMPP, IRC) is captured in real\u2011time.\n* Each message is tokenized and annotated with named entities, topics, and weighted terms (the paper calls these \u201ctime\u2011based facets\u201d).  \n\n### 2.  Building adaptive interest models\n* A **VIGIR (Virtual Interest Group & Information Recommender)** pipeline processes the stream.  \n* For each user, it aggregates the extracted features into a weighted vector that represents that user\u2019s interests.  \n* The model is adaptive: new messages update the vector, and reinforcement\u2011learning signals (e.g., clicks, replies, or explicit feedback) refine the weights.  The 2012 paper notes that the model can be explicitly expressed (e.g., as a set of weighted terms) or inferred (e.g., via reinforcement learning) (Source\u202f2).\n\n### 3.  Computing similarity between users\n* Once every user has a vector, a similarity metric (cosine similarity or another distance function) is computed pairwise among all users in the same or overlapping chat rooms.  \n* The 2010 paper explains that the accuracy of VIGs hinges on the quality of these models: \u201cthe more accurate the user models, the more accurate the VIGs will be\u201d (Source\u202f3).  \n* Users whose similarity exceeds a threshold are considered members of the same VIG.\n\n### 4.  Identifying and reporting VIGs\n* The system groups users into clusters (VIGs) based on the similarity graph.  \n* Each VIG is associated with a set of topics that are common to its members.  \n* VIGIR can then recommend content, suggest chat rooms, or surface relevant information to users, as described in the 2012 paper\u2019s abstract (Source\u202f2).\n\n### 5.  Optional refinement\n* The models and clusters can be continuously refined: new messages alter the vectors, new users join, and the system can re\u2011cluster.  \n* The 2010 incremental approach supports this ongoing adaptation, ensuring that VIGs remain current as user interests evolve (Source\u202f3).\n\n**In short**, virtual interest groups across chat rooms are discovered by building adaptive, weighted interest models for each user from chat content, measuring pairwise similarity between these models, and clustering users whose interests align closely enough to form a VIG. This methodology is laid out in **\u201cDiscovering Virtual Interest Groups across Chat Rooms\u201d (2012)** and relies on the incremental, similarity\u2011based user modeling described in **\u201cIncremental User Modeling with Heterogeneous User Behaviors\u201d (2010)**.",
+        "similarities": [
+          0.7614,
+          0.6854,
+          0.5475,
+          0.5133,
+          0.4792,
+          0.4231,
+          0.3661,
+          0.3302
+        ],
+        "n_chunks": 8,
+        "latency_s": 19.68,
+        "error": null
+      },
+      {
+        "id": "cont-04",
+        "query": "How does the adaptive nearest neighbor search work in the parts acquisition ePortal?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "It adapts a nearest-neighbor similarity search to user feedback so that the retrieval of substitute or obsolete parts improves over time, learning which attribute dimensions matter for judging part similarity.",
+        "must_contain": [],
+        "answer": "**How the adaptive nearest\u2011neighbor (ANN) search works in the parts\u2011acquisition ePortal**\n\n| Step | What happens | Where it\u2019s described |\n|------|--------------|----------------------|\n| 1. **Feature representation** | Every part in the catalog is encoded as a multi\u2011dimensional vector (e.g., mechanical properties, electrical specifications, manufacturer, part family). | \u201cAn Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal\u201d (2003) |\n| 2. **Initial retrieval** | A user issues a query (typically an example part or a set of desired attributes). The portal computes distances from the query vector to all catalog vectors using a *default* similarity metric (often Euclidean or cosine). The top\u2011\\(k\\) nearest parts are presented. | Same 2003 paper |\n| 3. **User feedback** | The engineer reviews the returned parts. If a part is selected (or marked \u201cgood\u201d) the system records a positive signal; if a part is discarded it records a negative signal. | \u201cLessons from the Implementation of an Adaptive Parts Acquisition ePortal\u201d (2003) |\n| 4. **Attribute\u2011weight adaptation** | The system maintains a weight vector \\(w\\) over attributes. After each feedback event it updates \\(w\\) (e.g., by boosting weights of attributes that helped the user pick a part and reducing weights of attributes that led to rejected parts). The weight update can be a simple linear rule or a more sophisticated learning\u2011to\u2011rank approach. | 2003 papers (see *adaptive similarity* keyword) |\n| 5. **Re\u2011ranking** | With the updated weights, the similarity between any two parts becomes a weighted distance \\(d_w(x, y)=\\sqrt{\\sum_i w_i (x_i-y_i)^2}\\). The portal reruns the nearest\u2011neighbor search using this new metric, yielding a more relevant ranked list. | 2003 papers |\n| 6. **Iterative learning** | Steps 3\u20135 are repeated as the engineer continues to search. Over time the weight vector converges to reflect the engineer\u2019s true preference for which attributes matter most when finding \u201csimilar\u201d parts. | 2003 papers and the lessons report |\n\n**Key points**\n\n* The ANN method blends classic *k\u2011NN* classification with an online learning component that tunes attribute importance.\n* It operates in a *query\u2011by\u2011example* setting: the user supplies an existing part and the portal finds the most similar replacements.\n* The system normalizes attributes and applies the learned weights to adapt the distance metric, thereby improving precision over successive queries.\n\n**References**\n\n* **An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal** (2003) \u2013 provides the core algorithmic description and shows how user preferences are incorporated into the similarity metric.\n* **Lessons From the Implementation of an Adaptive Parts Acquisition ePortal** (2003) \u2013 discusses practical lessons and details of the adaptive weighting and user\u2011feedback loop.",
+        "similarities": [
+          0.6915,
+          0.6765,
+          0.6557,
+          0.6553,
+          0.639,
+          0.6123,
+          0.594,
+          0.5646,
+          0.5459,
+          0.5161,
+          0.4942,
+          0.4784
+        ],
+        "n_chunks": 12,
+        "latency_s": 28.61,
+        "error": null
+      },
+      {
+        "id": "cont-05",
+        "query": "What cognitive biases affect information retrieval according to this research?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The 2005 work examines how analyst cognitive biases such as confirmation bias distort information seeking and retrieval, and proposes system-side mechanisms to counteract them during search.",
+        "must_contain": [],
+        "answer": "",
+        "similarities": [
+          0.7581,
+          0.6692,
+          0.6016,
+          0.5942,
+          0.5343,
+          0.5228,
+          0.5154,
+          0.5076,
+          0.5032,
+          0.4765
+        ],
+        "n_chunks": 10,
+        "latency_s": 28.88,
+        "error": null
+      },
+      {
+        "id": "cont-06",
+        "query": "How does adaptive interest modeling improve content services at the network edge?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "An adaptive model of each mobile user's interests drives content prefetching and peer-to-peer sharing at the network edge, reducing response time and increasing data availability in bandwidth-constrained mobile ad hoc networks.",
+        "must_contain": [],
+        "answer": "**Adaptive Interest Modeling (AIM) improves edge\u2011network content services by**\n\n| Mechanism | How it helps | Supporting work |\n|-----------|--------------|-----------------|\n| **Dynamic user\u2011interest inference** | AIM monitors real\u2011time network events (e.g., downloads, app usage) and extracts behavioral signals that are combined with contextual cues (time, location, device type). These signals are fed into a continuously updated interest model for each mobile user. Because the model reflects the user\u2019s current priorities, content can be ranked and cached according to relevance rather than generic popularity. | *Adaptive Interest Modeling Improves Content Services at the Network Edge* (MILCOM\u202f2014) |\n| **Proactive pre\u2011fetching** | Once a user\u2019s interests are predicted, the edge node can pre\u2011fetch likely\u2011requested content while the network is least congested or when the device is on a low\u2011bandwidth link. This reduces perceived latency and saves bandwidth when the user finally requests the content. | *Adaptive Interest Modeling Improves Content Services at the Network Edge* (MILCOM\u202f2014) \u2013 paragraph on \u201cpre\u2011fetching information to combat network disruptions\u201d |\n| **Bandwidth\u2011saving through selective delivery** | By prioritizing content that matches the user\u2019s adaptive interest model, AIM allows the network edge to drop or delay non\u2011relevant traffic, thereby lowering overall bandwidth consumption. This is especially valuable in constrained military or tactical networks where uplink capacity is limited. | *Adaptive Interest Modeling Improves Content Services at the Network Edge* (MILCOM\u202f2014); supporting discussion in *2014\u2011Adaptive Interest Modeling Improves Content Services at the Network Edge\u201106956895* |\n| **Contextual relevance scoring** | AIM extends the basic interest profile into separate *general* and *specific* interest components, and couples them with a simple context model (e.g., current task, environment). The final relevance score guides what content is pushed to the edge, ensuring that suggestions or pre\u2011fetches are contextually appropriate. | *Managing Analysis Context* (WIDM\u202f2012) \u2013 mention of extending user modeling to separate general/specific interests and combining with contextual relevance |\n\n**Resulting benefits**\n\n* **Lower bandwidth usage** \u2013 only the most relevant or anticipated content is transmitted, reducing traffic on limited links.  \n* **Higher relevance and user satisfaction** \u2013 content is tailored to the user\u2019s up\u2011to\u2011date interests, improving the usefulness of edge\u2011delivered services.  \n* **Reduced latency** \u2013 pre\u2011fetching based on the adaptive model means content is often already cached locally when the user requests it.  \n\nThese improvements are documented in the 2014 MILCOM paper and its extended descriptions in the 2014\u2011Adaptive Interest Modeling sources.",
+        "similarities": [
+          0.7991,
+          0.7479,
+          0.7439,
+          0.5604,
+          0.5089,
+          0.4933,
+          0.4611,
+          0.4028,
+          0.399
+        ],
+        "n_chunks": 9,
+        "latency_s": 24.34,
+        "error": null
+      },
+      {
+        "id": "cont-07",
+        "query": "What method is used to extract skills and expertise from resumes?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The work presents an algorithm that takes a resume as input and produces an expertise model expressing both the types of skills present and the level of competency in each, rather than treating skills as a flat keyword list.",
+        "must_contain": [],
+        "answer": "**Method for extracting skills and expertise from resumes**\n\nIn Dr.\u202fLi\u2019s 2015 work *User Modeling of Skills and Expertise from Resumes* (KMIS\u202f2015), the authors employ an **expertise\u2011modeling framework** that combines a manual evaluation step with an automated quantitative scoring step:\n\n1. **Manual competence judgment** \u2013 A human \u201cresume evaluator\u201d reads each skill listed in a r\u00e9sum\u00e9 and assigns a competence level (e.g., novice, intermediate, expert) for that skill, or an overall expertise level for a skill domain.  \n2. **Automatic quantitative assessment** \u2013 The manually\u2011labeled competence scores are used to build a statistical model that automatically generates numeric scores for each skill and for each skill domain directly from the r\u00e9sum\u00e9 text.  \n\nThis approach produces a quantitative expertise profile that can be used for matching candidates to job descriptions, finding experts in a particular skill, clustering resumes into virtual expertise groups, and recommending skills for future learning.  \n\nThe method is described in detail in *User Modeling of Skills and Expertise from Resumes* (2015).",
+        "similarities": [
+          0.7311,
+          0.727,
+          0.424,
+          0.4221,
+          0.4154,
+          0.377,
+          0.3463,
+          0.3445,
+          0.3325,
+          0.3301,
+          0.2977
+        ],
+        "n_chunks": 11,
+        "latency_s": 27.15,
+        "error": null
+      },
+      {
+        "id": "cont-08",
+        "query": "How does incremental user modeling handle heterogeneous user behaviors?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The approach updates a user interest model incrementally as different behavior types arrive, combining heterogeneous signals into a single evolving interest representation rather than requiring batch retraining.",
+        "must_contain": [],
+        "answer": "**How incremental user modeling deals with heterogeneous user behaviors**\n\n1. **Separate \u201cgrowth\u201d and \u201cadaptation\u201d processes**  \n   \u2013 The algorithm is split into two concurrent threads.  \n   \u2013 **Growth**: Whenever a new user event (click, rating, search, etc.) occurs, the system extracts the terms, categories, and relations that appear in that event and adds them to the user\u2019s interest model.  \n   \u2013 **Adaptation**: For every event that already contains a concept in the model, the weight of that concept is adjusted by a *reinforcement\u2013forgetting* scheme.  Reinforcement increases weights for positive events (e.g., a user clicking on a relevant item) and decreases them for negative events (e.g., a \u201cnot interested\u201d flag).  Forgetting is implemented through a decay function that gradually reduces the weight of all concepts when they are not reinforced.  \n   \u2013 Because the two processes operate independently, the system can continue to absorb new behavior types while simultaneously refining the importance of older ones.  \n   \u2013 This design is described in **\u201cIncremental User Modeling with Heterogeneous User Behaviors\u201d (2010)**, where the authors emphasize that the model \u201csupports incremental and real\u2011time modeling, and readily extends to new types of user events.\u201d\n\n2. **Event\u2011type agnostic feature extraction**  \n   \u2013 The growth step does not rely on a fixed set of event attributes.  It can parse any structured or semi\u2011structured event\u2014whether it is a click, a rating, a search query, or a social\u2011network action\u2014extracting concepts and relationships in the same way.  \n   \u2013 The result is a single structural model that contains concepts and their relations, each with a weight.  Because every event type feeds the same model, heterogeneous behaviors are naturally integrated.\n\n3. **Weight adjustment by reinforcement and decay**  \n   \u2013 The adaptation thread applies *reinforcement* (positive or negative) and *forgetting* (decay) to the same weight vector used by all event types.  This ensures that the influence of a concept reflects both its frequency across all behaviors and its recency.  \n   \u2013 In **\u201cAdaptive Interest Modeling Improves Content Services at the Network Edge\u201d (2014)** the same reinforcement\u2011decay mechanism is used, but the algorithm is tuned for rapidly changing network contexts; the core idea remains the same: all behaviors are treated uniformly in the weighting scheme.\n\n4. **Scalable, real\u2011time updates**  \n   \u2013 Because both growth and adaptation are incremental, the model can be updated on\u2011the\u2011fly for each new event.  No batch re\u2011training is required, which makes it practical for heterogeneous streams of user data.\n\n**Key papers cited**\n\n- *Incremental User Modeling with Heterogeneous User Behaviors* \u2013 2010 (A. Alonso, P. Bramsen, H. Li).  \n- *Adaptive Interest Modeling Improves Content Services at the Network Edge* \u2013 2014 (H. Li et\u202fal.).  \n- *Managing Analysis Context* \u2013 2012 (H. Li, R. Alonso), which discusses semantic enrichment of the same incremental framework.\n\nIn summary, incremental user modeling handles heterogeneous behaviors by feeding every event type into a common concept\u2011based model, then adjusting concept weights with a reinforcement\u2013forgetting loop that is agnostic to the event\u2019s origin. This allows the system to learn continuously from diverse user actions while keeping the model lightweight and responsive.",
+        "similarities": [
+          0.6715,
+          0.6579,
+          0.5527,
+          0.516,
+          0.4755,
+          0.4465,
+          0.4302,
+          0.4095,
+          0.3813,
+          0.3743,
+          0.3716
+        ],
+        "n_chunks": 11,
+        "latency_s": 27.54,
+        "error": null
+      },
+      {
+        "id": "cont-09",
+        "query": "What security threat does profile-based security address?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "It addresses malicious mobile agents by building behavioral profiles of agent activity and detecting agents whose behavior deviates from the expected profile.",
+        "must_contain": [],
+        "answer": "**Profile\u2011based security is designed to counter the threat of malicious mobile agents in distributed computing environments.**  \nThe 2006 paper *Profile\u2011Based Security Against Malicious Mobile Agents* describes a mechanism that builds dynamic user and agent behavior profiles, uses them to detect anomalous patterns, and applies adaptive access control to thwart mobile agents that attempt to compromise the system.  \n\n*Reference:*  \n- Li, H., Greene, G., & Alonso, R. (2006). **Profile\u2011Based Security Against Malicious Mobile Agents**. 2nd International Conference on Advanced Data Mining and Applications (ADMA 2006).",
+        "similarities": [
+          0.4946,
+          0.4337,
+          0.4207,
+          0.3657,
+          0.3531,
+          0.3096,
+          0.3063,
+          0.2793,
+          0.2781,
+          0.2716,
+          0.267,
+          0.2063
+        ],
+        "n_chunks": 12,
+        "latency_s": 28.15,
+        "error": null
+      },
+      {
+        "id": "cont-10",
+        "query": "What role does context play in managing analysis?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The Managing Analysis Context work treats an analyst's working context as a first-class object that can be captured, maintained, and used to prioritize and recommend information relevant to the current investigative task.",
+        "must_contain": [],
+        "answer": "**Role of context in managing analysis**\n\n1. **Context as the backbone of an analyst\u2019s workflow**  \n   *The paper *Managing Analysis Context* (Li\u202f&\u202fAlonso, 2012) explicitly frames analysis context as the central entity that a system must keep track of in order to support iterative, exploratory investigation.  The authors argue that by recording the sequence of queries, documents examined, and decisions made during a session, a system can \u201cimprove the relevance of retrieved information and suggested next steps\u201d (p.\u202f33).  In other words, context is not an after\u2011thought feature; it is the data that the system uses to anticipate the analyst\u2019s needs and to surface the most pertinent material at each step of the investigation.*\n\n2. **Micro\u2011context separation for fine\u2011grained relevance**  \n   The same 2012 paper discusses the technical challenge of *separating micro\u2011contexts*\u2014small, task\u2011specific bursts of activity that occur within a longer analytic session.  By learning and modeling the analyst\u2019s interests (the user\u2011modeling algorithm described in Section\u202f1.1), the system can keep these micro\u2011contexts distinct and apply them only to the relevant portions of the session.  This allows the system to avoid \u201ccontext mismatch\u201d (where a query is expanded using a mismatch between the analyst\u2019s intent and the corpus\u2019s indexing) and to generate query and alternative concept maps that are tailored to the current micro\u2011context (p.\u202f34\u201335).\n\n3. **Context for automatic query enrichment**  \n   In the earlier 2005 work *Model\u2011Guided Information Discovery for Intelligence Analysis* (Alonso\u202f&\u202fLi, 2005), context is defined through an *analyst model* that captures the analyst\u2019s interests and knowledge.  This model serves as a source for automatic query enrichment before a query is even sent to a search engine, thereby pre\u2011emptively addressing the context mismatch problem and improving retrieval performance.\n\n4. **Context for combating cognitive bias**  \n   *Combating Cognitive Biases in Information Retrieval* (Alonso\u202f&\u202fLi, 2005) presents a system that maintains a context map (the user model) and uses it to generate alternative concept maps.  By continuously re\u2011contextualizing the analyst\u2019s information needs, the system helps to surface diverse viewpoints and reduces the risk of confirmation bias.\n\n5. **Incremental, real\u2011time adaptation**  \n   *Incremental User Modeling with Heterogeneous User Behaviors* (Alonso\u202f&\u202fLi, 2010) extends this idea by collecting Analysis Log Events (ALEs) in real time and storing them in a web\u2011service\u2013based repository (ALS).  The model is updated incrementally as new evidence arrives, allowing the system to adapt on the fly and keep the context map current during the analyst\u2019s work.\n\n**In short, context in Dr.\u202fLi\u2019s research serves three interconnected roles:**\n\n* **Tracking** \u2013 recording the analyst\u2019s history, focus, and actions.  \n* **Adapting** \u2013 continually updating a user/analyst model that reflects current interests and knowledge.  \n* **Acting** \u2013 using that model to enrich queries, generate alternative representations, and recommend next steps, thereby making the exploratory analysis more efficient, accurate, and less biased.  \n\nThese contributions are articulated most directly in *Managing Analysis Context* (2012), and their foundational ideas are laid out in the 2005 papers *Model\u2011Guided Information Discovery for Intelligence Analysis* and *Combating Cognitive Biases in Information Retrieval*, with incremental, real\u2011time extensions presented in *Incremental User Modeling with Heterogeneous User Behaviors* (2010).",
+        "similarities": [
+          0.6933,
+          0.5439,
+          0.4357,
+          0.4163,
+          0.3632,
+          0.3497,
+          0.3423,
+          0.3306,
+          0.2945,
+          0.2883,
+          0.2669
+        ],
+        "n_chunks": 11,
+        "latency_s": 20.5,
+        "error": null
+      },
+      {
+        "id": "cont-11",
+        "query": "What is the common thread connecting the user modeling papers across the corpus?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "Across the corpus, user modeling recurs as the mechanism for personalization: interest models are built from observed behavior and then used to drive recommendation, retrieval prioritization, content prefetching, collaboration discovery, and expertise assessment across domains ranging from e-procurement to intelligence analysis to mobile networks.",
+        "must_contain": [],
+        "answer": "The papers that focus on *user modeling* in Dr.\u202fLi\u2019s corpus share a single conceptual thread: **building and continuously updating a dynamic representation of a user\u2019s interests, expertise, or analytic focus so that an information\u2011retrieval or recommendation system can adapt its behavior in real time**.  The key elements that appear across the works are:\n\n| Paper | Core Contribution to the Thread |\n|-------|---------------------------------|\n| **\u201cIncremental User Modeling With Heterogeneous User Behaviors\u201d (2010)** | Introduces an incremental learning framework that integrates multiple user actions (queries, page views, bookmarks, deletions) to maintain an up\u2011to\u2011date concept\u2011based model (Source\u202f4, Source\u202f7). |\n| **\u201cManaging Analysis Context\u201d (2012)** | Extends the idea to analyst workflows, using RAMA\u2011derived user models to separate interleaved analytic contexts and detect shifts in focus (Source\u202f1, Source\u202f3). |\n| **\u201cDiscovering Virtual Interest Groups Across Chat Rooms\u201d (2012)** | Applies a real\u2011time, event\u2011driven user\u2011modeling engine (modified RAMA) to chat data, enabling the capture of users\u2019 interests and expertise in a conversational setting (Source\u202f2, Source\u202f11). |\n| **\u201cUser Modeling for Contextual Suggestion\u201d (2014)** | Shows how the adaptive user model can be exploited in a TREC\u2011style recommender system, producing personalized suggestions that reflect the user\u2019s evolving interests (Source\u202f8). |\n| **\u201cUser Modeling of Skills and Expertise from Resumes\u201d (2015)** | Demonstrates a domain\u2011specific use of user modeling, where resumes are mined to build skill\u2011based expertise profiles for expert search (Source\u202f5, Source\u202f6). |\n| **\u201cAdaptive Interest Modeling Improves Content Services at the Network Edge\u201d (2014)** | Generalizes the adaptive interest\u2011modeling idea to content delivery at the edge of a network, again relying on RAMA\u2011style updates to keep user interests current (Source\u202f12). |\n\n**Common thread**\n\nAcross these papers, the same methodological ingredients recur:\n\n1. **Dynamic, incremental learning** \u2013 models are updated continuously as new user interactions arrive (Sources\u202f4,\u202f7).  \n2. **Multi\u2011behavior integration** \u2013 the models consider diverse evidence (queries, page views, chats, resume texts) to reduce bias and capture a fuller picture of interests (Sources\u202f4,\u202f2,\u202f11,\u202f5).  \n3. **RAMA (Reinforcement and Aging Modeling Algorithm)** \u2013 a core algorithm that drives adaptation, often mentioned explicitly (Sources\u202f1,\u202f3,\u202f11).  \n4. **Contextual application** \u2013 the models are not just static representations; they are fed back into the system to shape queries, suggestions, or content delivery (Sources\u202f9,\u202f8,\u202f12).  \n\nThus, the unifying theme is **an adaptive, behavior\u2011driven user model that enables context\u2011aware information systems**\u2014whether for intelligence analysts, chat users, or resume\u2011based expert search.",
+        "similarities": [
+          0.5486,
+          0.5086,
+          0.4957,
+          0.4846,
+          0.4593,
+          0.4481,
+          0.4329,
+          0.4223,
+          0.4088,
+          0.372,
+          0.3714,
+          0.3687
+        ],
+        "n_chunks": 12,
+        "latency_s": 28.58,
+        "error": null
+      },
+      {
+        "id": "adv-01",
+        "query": "What do these papers say about transformer architectures and attention mechanisms?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The corpus does not cover transformer architectures. The papers span 2003 to 2015 and predate the transformer, so no grounded answer is available from these sources.",
+        "must_contain": [],
+        "answer": "None of the papers in the provided corpus discuss transformer architectures or attention mechanisms.  \nThe excerpts from each title (e.g., *Incremental User Modeling with Heterogeneous User Behaviors* (2010), *Discovery of Player Strategies in a Serious Game* (2013), *Combating Cognitive Biases in Information Retrieval* (2005), *Managing Analysis Context* (2012), *Adaptive Interest Modeling Improves Content Services at the Network Edge* (2014), *User Modeling of Skills and Expertise from Resumes* (2015), etc.) all focus on user\u2011modeling, intelligence\u2011analysis workflows, or content\u2011delivery systems and contain no mention of transformers, self\u2011attention, or related deep\u2011learning concepts.",
+        "similarities": [
+          0.3398,
+          0.3212,
+          0.3149,
+          0.3067,
+          0.2928,
+          0.291,
+          0.2817,
+          0.2779,
+          0.2751,
+          0.2639,
+          0.2579,
+          0.2526
+        ],
+        "n_chunks": 12,
+        "latency_s": 25.04,
+        "error": null
+      },
+      {
+        "id": "adv-02",
+        "query": "Which of these papers won a best paper award?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The corpus does not contain information about best paper awards, so this cannot be answered from the available sources.",
+        "must_contain": [],
+        "answer": "From the excerpts and bibliographic information provided, none of Dr.\u202fHua\u202fLi\u2019s papers are explicitly noted as having received a best\u2011paper award.  The available text does not mention any award recognition for any of the 15 listed publications.  Therefore, based on the supplied context, we cannot identify any paper that won a best\u2011paper award.",
+        "similarities": [
+          0.2813,
+          0.2737,
+          0.2654,
+          0.2557,
+          0.2524,
+          0.2505,
+          0.2497,
+          0.2361,
+          0.2331,
+          0.2196,
+          0.2128,
+          0.2095
+        ],
+        "n_chunks": 12,
+        "latency_s": 27.15,
+        "error": null
+      }
+    ]
+  },
+  {
+    "config": {
+      "label": "top_k=5",
+      "backend": "groq",
+      "model": "openai/gpt-oss-20b",
+      "top_k": 5,
+      "judge_backend": "gemini",
+      "judge_rpm": 12,
+      "embed_model": "all-MiniLM-L6-v2"
+    },
+    "rag_track": {
+      "n": 18,
+      "skipped": [],
+      "scores": {
+        "faithfulness": 0.5537,
+        "answer_relevancy": 0.8636,
+        "llm_context_precision_with_reference": 0.6577,
+        "context_recall": 0.625
+      },
+      "rows": [
+        {
+          "id": "meta-01",
+          "n_chunks": 7,
+          "latency_s": 19.65,
+          "faithfulness": 1.0,
+          "answer_relevancy": 0.9571,
+          "llm_context_precision_with_reference": 0.8767,
+          "context_recall": 1.0
+        },
+        {
+          "id": "meta-02",
+          "n_chunks": 7,
+          "latency_s": 13.57,
+          "faithfulness": 1.0,
+          "answer_relevancy": 0.966,
+          "llm_context_precision_with_reference": 1.0,
+          "context_recall": 1.0
+        },
+        {
+          "id": "meta-03",
+          "n_chunks": 5,
+          "latency_s": 18.22,
+          "faithfulness": 1.0,
+          "answer_relevancy": 0.7632,
+          "llm_context_precision_with_reference": 0.3333,
+          "context_recall": 1.0
+        },
+        {
+          "id": "meta-04",
+          "n_chunks": 5,
+          "latency_s": 7.59,
+          "faithfulness": 1.0,
+          "answer_relevancy": 0.9502,
+          "llm_context_precision_with_reference": 0.5,
+          "context_recall": 1.0
+        },
+        {
+          "id": "meta-05",
+          "n_chunks": 7,
+          "latency_s": 18.86,
+          "faithfulness": 0.6667,
+          "answer_relevancy": 0.7143,
+          "llm_context_precision_with_reference": 0.2262,
+          "context_recall": 1.0
+        },
+        {
+          "id": "cont-01",
+          "n_chunks": 5,
+          "latency_s": 15.03,
+          "faithfulness": 0.5455,
+          "answer_relevancy": 0.6536,
+          "llm_context_precision_with_reference": 1.0,
+          "context_recall": 1.0
+        },
+        {
+          "id": "cont-02",
+          "n_chunks": 5,
+          "latency_s": 10.92,
+          "faithfulness": 0.4,
+          "answer_relevancy": 0.987,
+          "llm_context_precision_with_reference": 1.0,
+          "context_recall": 0.0
+        },
+        {
+          "id": "cont-03",
+          "n_chunks": 5,
+          "latency_s": 11.28,
+          "faithfulness": 0.2,
+          "answer_relevancy": 1.0,
+          "llm_context_precision_with_reference": 0.0,
+          "context_recall": 0.0
+        },
+        {
+          "id": "cont-04",
+          "n_chunks": 5,
+          "latency_s": 16.22,
+          "faithfulness": 0.3,
+          "answer_relevancy": 0.9957,
+          "llm_context_precision_with_reference": 1.0,
+          "context_recall": 1.0
+        },
+        {
+          "id": "cont-05",
+          "n_chunks": 5,
+          "latency_s": 13.3,
+          "faithfulness": 0.2,
+          "answer_relevancy": 0.8782,
+          "llm_context_precision_with_reference": 0.0,
+          "context_recall": 0.0
+        },
+        {
+          "id": "cont-06",
+          "n_chunks": 5,
+          "latency_s": 20.29,
+          "faithfulness": 0.4231,
+          "answer_relevancy": 0.9285,
+          "llm_context_precision_with_reference": 1.0,
+          "context_recall": 0.0
+        },
+        {
+          "id": "cont-07",
+          "n_chunks": 5,
+          "latency_s": 12.22,
+          "faithfulness": 0.5,
+          "answer_relevancy": 0.8559,
+          "llm_context_precision_with_reference": 1.0,
+          "context_recall": 0.0
+        },
+        {
+          "id": "cont-08",
+          "n_chunks": 5,
+          "latency_s": 11.15,
+          "faithfulness": 0.6875,
+          "answer_relevancy": 1.0,
+          "llm_context_precision_with_reference": 0.8875,
+          "context_recall": 1.0
+        },
+        {
+          "id": "cont-09",
+          "n_chunks": 5,
+          "latency_s": 15.76,
+          "faithfulness": 0.5,
+          "answer_relevancy": 0.6877,
+          "llm_context_precision_with_reference": 0.7,
+          "context_recall": 1.0
+        },
+        {
+          "id": "cont-10",
+          "n_chunks": 5,
+          "latency_s": 16.53,
+          "faithfulness": 0.2143,
+          "answer_relevancy": 0.8517,
+          "llm_context_precision_with_reference": 1.0,
+          "context_recall": 1.0
+        },
+        {
+          "id": "cont-11",
+          "n_chunks": 5,
+          "latency_s": 13.5,
+          "faithfulness": 0.2222,
+          "answer_relevancy": 0.6287,
+          "llm_context_precision_with_reference": 0.0,
+          "context_recall": 0.0
+        },
+        {
+          "id": "adv-01",
+          "n_chunks": 5,
+          "latency_s": 20.85,
+          "faithfulness": null,
+          "answer_relevancy": null,
+          "llm_context_precision_with_reference": null,
+          "context_recall": null
+        },
+        {
+          "id": "adv-02",
+          "n_chunks": 5,
+          "latency_s": 17.43,
+          "faithfulness": null,
+          "answer_relevancy": null,
+          "llm_context_precision_with_reference": null,
+          "context_recall": null
+        }
+      ]
+    },
+    "exact_track": {
+      "n": 8,
+      "pass_rate": 1.0,
+      "type_accuracy": 1.0,
+      "rows": [
+        {
+          "id": "stats-01",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 0.44
+        },
+        {
+          "id": "stats-02",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 0.41
+        },
+        {
+          "id": "stats-03",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 0.41
+        },
+        {
+          "id": "stats-04",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 0.98
+        },
+        {
+          "id": "stats-05",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 0.76
+        },
+        {
+          "id": "list-01",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 0.52
+        },
+        {
+          "id": "list-02",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 1.29
+        },
+        {
+          "id": "list-03",
+          "passed": true,
+          "missing": [],
+          "type_match": true,
+          "latency_s": 10.78
+        }
+      ]
+    },
+    "routing": {
+      "overall": 1.0,
+      "per_type": {
+        "stats": 1.0,
+        "listing": 1.0,
+        "metadata": 1.0,
+        "content": 1.0
+      },
+      "mismatches": [],
+      "errored": []
+    },
+    "records": [
+      {
+        "id": "stats-01",
+        "query": "How many papers are in this corpus?",
+        "expected_type": "stats",
+        "actual_type": "stats",
+        "type_match": true,
+        "reference": "The corpus contains 15 papers.",
+        "must_contain": [
+          "15"
+        ],
+        "answer": "There are **15 papers** in the corpus, as listed in the \u201cCORPUS OVERVIEW.\u201d  These include works such as *\u201cAn Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal\u201d* (2003), *\u201cCombating Cognitive Biases in Information Retrieval\u201d* (2005), *\u201cPotential IED Threat System (PITS)\u201d* (2009), *\u201cDiscovery of Player Strategies in a Serious Game\u201d* (2013), and *\u201cUser Modeling of Skills and Expertise from Resumes\u201d* (2015), among others.",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 0.44,
+        "error": null
+      },
+      {
+        "id": "stats-02",
+        "query": "What year was the earliest paper published?",
+        "expected_type": "stats",
+        "actual_type": "stats",
+        "type_match": true,
+        "reference": "The earliest papers date from 2003.",
+        "must_contain": [
+          "2003"
+        ],
+        "answer": "The earliest paper listed in the corpus was published in **2003**.  \nExamples include:\n\n- \u201cAn Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal\u201d (2003)  \n- \u201cLessons from the Implementation of an Adaptive Parts Acquisition ePortal\u201d (2003)  \n\nBoth papers are from the year 2003, making it the earliest publication year in Dr.\u202fHua Li\u2019s research record.",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 0.41,
+        "error": null
+      },
+      {
+        "id": "stats-03",
+        "query": "What year range does this research span?",
+        "expected_type": "stats",
+        "actual_type": "stats",
+        "type_match": true,
+        "reference": "The corpus spans 2003 through 2015.",
+        "must_contain": [
+          "2003",
+          "2015"
+        ],
+        "answer": "The papers listed span a **2003\u20132015** period.  \n- The earliest paper is *\u201cAn Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal\u201d* (2003).  \n- The most recent is *\u201cUser Modeling of Skills and Expertise from Resumes\u201d* (2015).",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 0.41,
+        "error": null
+      },
+      {
+        "id": "stats-04",
+        "query": "What is the total word count across all papers?",
+        "expected_type": "stats",
+        "actual_type": "stats",
+        "type_match": true,
+        "reference": "The corpus contains 26,890 words in total.",
+        "must_contain": [
+          "26"
+        ],
+        "answer": "The papers listed in the corpus sum to **26,890 words** in total.  \nThis total is obtained by adding the word counts from each individual paper:\n\n- 2003: *An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal* \u2013 126 words  \n- 2003: *Lessons from the Implementation of an Adaptive Parts Acquisition ePortal* \u2013 103 words  \n- 2005: *Combating Cognitive Biases in Information Retrieval* \u2013 1,256 words  \n- 2005: *Model\u2011Guided Information Discovery for Intelligence Analysis* \u2013 106 words  \n- 2006: *Profile\u2011Based Security Against Malicious Mobile Agents* \u2013 108 words  \n- 2009: *Potential IED Threat System (PITS)* \u2013 5,364 words  \n- 2009: *Spatial Event Prediction by Combining Value Function Approximation and Case\u2011Based Reasoning* \u2013 121 words  \n- 2010: *Incremental User Modeling with Heterogeneous User Behaviors* \u2013 4,201 words  \n- 2012: *Discovering Virtual Interest Groups across Chat Rooms* \u2013 3,644 words  \n- 2012: *Managing Analysis Context* \u2013 110 words  \n- 2012: *Opaque Attribute Alignment* \u2013 112 words  \n- 2013: *Discovery of Player Strategies in a Serious Game* \u2013 4,297 words  \n- 2014: *Adaptive Interest Modeling Improves Content Services at the Network Edge* \u2013 143 words  \n- 2014: *User Modeling for Contextual Suggestion* \u2013 4,838 words  \n- 2015: *User Modeling of Skills and Expertise from Resumes* \u2013 2,361 words  \n\nAdding these figures yields 26,890 words, matching the total word count reported in the corpus overview.",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 0.98,
+        "error": null
+      },
+      {
+        "id": "stats-05",
+        "query": "What is the most recent paper in the collection?",
+        "expected_type": "stats",
+        "actual_type": "stats",
+        "type_match": true,
+        "reference": "The most recent work is the 2015 paper on user modeling of skills and expertise from resumes.",
+        "must_contain": [
+          "2015"
+        ],
+        "answer": "The most recent paper in the collection is:\n\n**\u201cUser Modeling of Skills and Expertise from Resumes\u201d (2015)** \u2013 presented at KMIS 2015, comprising 2,361 words.",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 0.76,
+        "error": null
+      },
+      {
+        "id": "list-01",
+        "query": "List all papers published in 2012.",
+        "expected_type": "listing",
+        "actual_type": "listing",
+        "type_match": true,
+        "reference": "The 2012 papers are: Discovering Virtual Interest Groups across Chat Rooms; Managing Analysis Context; and Opaque Attribute Alignment.",
+        "must_contain": [
+          "Virtual Interest Groups",
+          "Opaque Attribute Alignment"
+        ],
+        "answer": "**Papers published in 2012**\n\n- *Discovering Virtual Interest Groups across Chat Rooms* (2012) \u2013 KMIS 2012, 3,644 words  \n- *Managing Analysis Context* (2012) \u2013 12th International Workshop on Web Information and Data Management (WIDM 2012), 110 words  \n- *Opaque Attribute Alignment* (2012) \u2013 IEEE 28th International Conference on Data Engineering Workshops (ICDEW 2012), 112 words",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 0.52,
+        "error": null
+      },
+      {
+        "id": "list-02",
+        "query": "Give me the full list of publications.",
+        "expected_type": "listing",
+        "actual_type": "listing",
+        "type_match": true,
+        "reference": "The corpus lists 15 papers spanning 2003 to 2015: An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal (2003); Lessons from the Implementation of an Adaptive Parts Acquisition ePortal (2003); Combating Cognitive Biases in Information Retrieval (2005); Model-Guided Information Discovery for Intelligence Analysis (2005); Profile-Based Security Against Malicious Mobile Agents (2006); Potential IED Threat System (PITS) (2009); Spatial Event Prediction by Combining Value Function Approximation and Case-Based Reasoning (2009); Incremental User Modeling with Heterogeneous User Behaviors (2010); Discovering Virtual Interest Groups across Chat Rooms (2012); Managing Analysis Context (2012); Opaque Attribute Alignment (2012); Discovery of Player Strategies in a Serious Game (2013); Adaptive Interest Modeling Improves Content Services at the Network Edge (2014); User Modeling for Contextual Suggestion (2014); and User Modeling of Skills and Expertise from Resumes (2015).",
+        "must_contain": [],
+        "answer": "**Dr. Hua Li\u2019s Publications (2003\u202f\u2013\u202f2015)**  \n\n| Year | Title | Venue | Word count | Authors (excerpt) |\n|------|-------|-------|------------|-------------------|\n| 2003 | *An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal* | 9th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD\u202f2003) | 126 | Rafael\u202fAlonso, Jeffrey\u202fA. Bloom, Hua\u202fLi, Chumki\u202fBasu |\n| 2003 | *Lessons from the Implementation of an Adaptive Parts Acquisition ePortal* | 12th ACM International Conference on Information and Knowledge Management (CIKM\u202f2003) | 103 | Rafael\u202fAlonso, Jeffrey\u202fA. Bloom, Hua\u202fLi |\n| 2005 | *Combating Cognitive Biases in Information Retrieval* | Proc. International Conference on Intelligence Analysis | 1,256 | Rafael\u202fAlonso, Hua\u202fLi |\n| 2005 | *Model\u2011Guided Information Discovery for Intelligence Analysis* | 14th ACM International Conference on Information and Knowledge Management (CIKM\u202f2005) | 106 | Rafael\u202fAlonso, Hua\u202fLi |\n| 2006 | *Profile\u2011Based Security Against Malicious Mobile Agents* | 2nd International Conference on Advanced Data Mining and Applications (ADMA\u202f2006) | 108 | Hua\u202fLi, Glena\u202fGreene, Rafael\u202fAlonso |\n| 2009 | *Potential IED Threat System (PITS)* | 2009 IEEE Conference on Technologies for Homeland Security | 5,364 | Hua\u202fLi, Diane\u202fBramsen, Rafael\u202fAlonso |\n| 2009 | *Spatial Event Prediction by Combining Value Function Approximation and Case\u2011Based Reasoning* | 8th International Conference on Case\u2011Based Reasoning (ICCBR\u202f2009) | 121 | Hua\u202fLi, H\u00e9ctor\u202fMu\u00f1oz\u2011Avila, Diane\u202fBramsen, Chad\u202fHogg, Rafael\u202fAlonso |\n| 2010 | *Incremental User Modeling with Heterogeneous User Behaviors* | KMIS\u202f2010 | 4,201 | Rafael\u202fAlonso, Peter\u202fBramsen, Hua\u202fLi |\n| 2012 | *Discovering Virtual Interest Groups across Chat Rooms* | KMIS\u202f2012 | 3,644 | Hua\u202fLi, Jeff\u202fLau, Rafael\u202fAlonso |\n| 2012 | *Managing Analysis Context* | 12th International Workshop on Web Information and Data Management (WIDM\u202f2012) | 110 | Hua\u202fLi, Rafael\u202fAlonso |\n| 2012 | *Opaque Attribute Alignment* | IEEE 28th International Conference on Data Engineering Workshops (ICDEW\u202f2012) | 112 | Jennifer\u202fSleeman, Rafael\u202fAlonso, Hua\u202fLi, Art\u202fPope, Antonio\u202fBadia |\n| 2013 | *Discovery of Player Strategies in a Serious Game* | First AAAI Conference on Human Computation and Crowdsourcing | 4,297 | Hua\u202fLi, H\u00e9ctor\u202fMu\u00f1oz\u2011Avila, Liana\u202fKe, Chris\u202fSymborski, Rafael\u202fAlonso |\n| 2014 | *Adaptive Interest Modeling Improves Content Services at the Network Edge* | IEEE Military Communications Conference (MILCOM\u202f2014) | 143 | Hua\u202fLi, Ralph\u202fCostantini, David\u202fAnhalt, Rafael\u202fAlonso, Mark\u2011Oliver\u202fStehr, Carolyn\u202fTalcot, Minyoung\u202fKim, Timothy\u202fMcCarthy, Samuel\u202fWood |\n| 2014 | *User Modeling for Contextual Suggestion* | 21st Text\u202fRetrieval Conference (TREC\u202f2014) | 4,838 | Hua\u202fLi, Rafael\u202fAlonso |\n| 2015 | *User Modeling of Skills and Expertise from Resumes* | KMIS\u202f2015 | 2,361 | Hua\u202fLi, Daniel\u202fJ.\u202fT.\u202fPowell, Mark\u202fClark, Tifani\u202fO'Brien |\n\nThese 15 entries comprise the full list of Dr. Hua Li\u2019s publications from 2003 to 2015, as provided in the corpus overview.",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 1.29,
+        "error": null
+      },
+      {
+        "id": "list-03",
+        "query": "Which papers were published before 2010?",
+        "expected_type": "listing",
+        "actual_type": "listing",
+        "type_match": true,
+        "reference": "Papers before 2010 include the 2003 parts acquisition ePortal work (and its companion lessons-learned paper), the 2005 papers on cognitive biases in information retrieval and model-guided information discovery, the 2006 profile-based security paper, and the 2009 papers on the Potential IED Threat System and spatial event prediction.",
+        "must_contain": [
+          "2003"
+        ],
+        "answer": "The papers authored by Dr. Hua Li that were published **before 2010** are:\n\n| Year | Title |\n|------|-------|\n| 2003 | *An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal* |\n| 2003 | *Lessons from the Implementation of an Adaptive Parts Acquisition ePortal* |\n| 2005 | *Combating Cognitive Biases in Information Retrieval* |\n| 2005 | *Model\u2011Guided Information Discovery for Intelligence Analysis* |\n| 2006 | *Profile\u2011Based Security Against Malicious Mobile Agents* |\n| 2009 | *Potential IED Threat System (PITS)* |\n| 2009 | *Spatial Event Prediction by Combining Value Function Approximation and Case\u2011Based Reasoning* |\n\nThese are all the entries in the provided corpus with publication years earlier than 2010.",
+        "similarities": [],
+        "n_chunks": 0,
+        "latency_s": 10.78,
+        "error": null
+      },
+      {
+        "id": "meta-01",
+        "query": "Who wrote 'An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal'?",
+        "expected_type": "metadata",
+        "actual_type": "metadata",
+        "type_match": true,
+        "reference": "The authors are Rafael Alonso, Jeffrey A. Bloom, Hua Li, and Chumki Basu. It appeared at the 9th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD 2003).",
+        "must_contain": [
+          "Alonso",
+          "Bloom",
+          "Basu"
+        ],
+        "answer": "**Answer**\n\nThe paper *\u201cAn Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal\u201d* (2003) was authored by:\n\n- **Rafael Alonso**  \n- **Jeffrey A. Bloom**  \n- **Hua Li**  \n- **Chumki Basu**\n\nThese authors are listed in both the conference proceedings (KDD\u202f2003) and the accompanying technical reports cited in the provided sources\u30102\u3011\u30103\u3011.",
+        "similarities": [
+          0.6886,
+          0.6866,
+          0.6752,
+          0.6473,
+          0.6152,
+          0.4343,
+          0.5973
+        ],
+        "n_chunks": 7,
+        "latency_s": 19.65,
+        "error": null
+      },
+      {
+        "id": "meta-02",
+        "query": "What venue published the Opaque Attribute Alignment paper?",
+        "expected_type": "metadata",
+        "actual_type": "metadata",
+        "type_match": true,
+        "reference": "Opaque Attribute Alignment appeared at the IEEE 28th International Conference on Data Engineering in 2012.",
+        "must_contain": [
+          "Data Engineering"
+        ],
+        "answer": "The **Opaque Attribute Alignment** paper was published in the proceedings of the **IEEE 28th International Conference on Data Engineering Workshops (ICDEW 2012)**\u3010Source\u202f1\u3011.",
+        "similarities": [
+          0.592,
+          0.579,
+          0.3335,
+          0.3226,
+          0.3176,
+          0.4989,
+          0.4953
+        ],
+        "n_chunks": 7,
+        "latency_s": 13.57,
+        "error": null
+      },
+      {
+        "id": "meta-03",
+        "query": "Who are the authors of the spatial event prediction paper?",
+        "expected_type": "metadata",
+        "actual_type": "metadata",
+        "type_match": true,
+        "reference": "The authors are Hua Li, Hector Munoz-Avila, Diane Bramsen, Chad Hogg, and Rafael Alonso. It appeared at the 8th International Conference on Case-Based Reasoning (ICCBR 2009).",
+        "must_contain": [
+          "Hogg",
+          "Bramsen"
+        ],
+        "answer": "The spatial\u2011event prediction paper, **\u201cSpatial Event Prediction by Combining Value Function Approximation and Case\u2011Based Reasoning\u201d** (2009, ICCBR\u202f2009), was authored by:\n\n- **Hua Li**  \n- **H\u00e9ctor\u202fMu\u00f1oz\u2011Avila**  \n- **Diane\u202fBramsen**  \n- **Chad\u202fHogg**  \n- **Rafael\u202fAlonso**  \n\n(See the 2009 ICCBR conference paper listing in the corpus overview.)",
+        "similarities": [
+          0.518,
+          0.5036,
+          0.4608,
+          0.363,
+          0.3618
+        ],
+        "n_chunks": 5,
+        "latency_s": 18.22,
+        "error": null
+      },
+      {
+        "id": "meta-04",
+        "query": "Where was 'Adaptive Interest Modeling Improves Content Services at the Network Edge' published?",
+        "expected_type": "metadata",
+        "actual_type": "metadata",
+        "type_match": true,
+        "reference": "It was published at the IEEE Military Communications Conference (MILCOM) in 2014.",
+        "must_contain": [
+          "MILCOM"
+        ],
+        "answer": "**Publication venue**\n\n*Adaptive Interest Modeling Improves Content Services at the Network Edge* was presented at the **IEEE Military Communications Conference (MILCOM) in 2014**\u3010Source\u202f2\u3011\u3010Source\u202f3\u3011.",
+        "similarities": [
+          0.7044,
+          0.7003,
+          0.6514,
+          0.5203,
+          0.471
+        ],
+        "n_chunks": 5,
+        "latency_s": 7.59,
+        "error": null
+      },
+      {
+        "id": "meta-05",
+        "query": "Did Jennifer Sleeman coauthor any of these papers?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "Yes. Jennifer Sleeman is a coauthor of Opaque Attribute Alignment (IEEE ICDE, 2012), along with Rafael Alonso, Hua Li, Art Pope, and others.",
+        "must_contain": [
+          "Opaque Attribute Alignment"
+        ],
+        "answer": "Yes.  \nJennifer\u202fSleeman is listed as an author on the 2012 paper **\u201cOpaque Attribute Alignment\u201d** (IEEE\u202f28th\u202fInternational Conference on Data Engineering Workshops, 2012). This is the only paper in the provided list that names her.",
+        "similarities": [
+          0.2725,
+          0.2515,
+          0.2446,
+          0.2293,
+          0.2156,
+          0.1163,
+          0.1153
+        ],
+        "n_chunks": 7,
+        "latency_s": 18.86,
+        "error": null
+      },
+      {
+        "id": "cont-01",
+        "query": "What approach was used for spatial event prediction?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The approach combines value function approximation with case-based reasoning to predict the timing and location of events, fusing geographic and non-geographic data sources.",
+        "must_contain": [],
+        "answer": "The 2009 ICCBR paper **\u201cSpatial Event Prediction by Combining Value Function Approximation and Case\u2011Based Reasoning\u201d** describes a hybrid approach that merges two AI techniques:\n\n1. **Reinforcement\u2011learning value\u2011function approximation** \u2013 the system learns a predictive model from historical spatial event data by approximating the expected reward (or value) of being in a particular geographic state.\n2. **Case\u2011based reasoning (CBR)** \u2013 the learned model is complemented by retrieving analogous past cases; the most similar historical spatial events are used to refine or correct the prediction.\n\nTogether, the reinforcement\u2011learning component provides a general predictive baseline while the case\u2011based component injects specific, context\u2011aware adjustments, yielding a more accurate spatial event prediction. This hybrid method was evaluated on real\u2011world event datasets and was part of an IARPA program effort.\n\n*Citation:* Spatial Event Prediction by Combining Value Function Approximation and Case-Based Reasoning (2009).",
+        "similarities": [
+          0.594,
+          0.5803,
+          0.5097,
+          0.4668,
+          0.3491
+        ],
+        "n_chunks": 5,
+        "latency_s": 15.03,
+        "error": null
+      },
+      {
+        "id": "cont-02",
+        "query": "What is the core idea behind opaque attribute alignment?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The insight is that semantically similar attributes tend to have similar data distributions or densities, so distributional comparison \u2014 using kernel density estimation \u2014 can align attributes even when their names and schemas are opaque.",
+        "must_contain": [],
+        "answer": "**Core idea of opaque attribute alignment**\n\nOpaque attribute alignment is a schema\u2011matching technique that treats each attribute as a *black box*\u2014its actual values are ignored, and only the attribute as an entity is examined. The goal is to find correspondences between such attributes in heterogeneous data sources when explicit semantic documentation (e.g., ontology labels or data dictionaries) is missing or incomplete.  \n\nKey points from the 2012 IEEE ICDEW paper *\u201cOpaque Attribute Alignment\u201d* (Li et\u202fal., 2012):\n\n1. **Non\u2011interpreted (opaque) view** \u2013 Attributes are represented only by their statistical or structural properties (e.g., value distribution, cardinality, type, position in the schema) rather than by the meaning of the data they hold.  \n2. **Statistical & structural techniques** \u2013 The method employs measures such as entropy, overlap of value ranges, or correlation of attribute positions to evaluate similarity.  \n3. **Cross\u2011source correspondence discovery** \u2013 By comparing these opaque features across disparate sources, the approach identifies likely matches, enabling data integration when explicit schema documentation is lacking.  \n\nThus, the core idea is to align attributes purely based on their *opaque* statistical and structural signatures, without relying on domain knowledge or interpreted values. This allows integration of heterogeneous data sets that would otherwise be difficult to reconcile.",
+        "similarities": [
+          0.6791,
+          0.6637,
+          0.3099,
+          0.2686,
+          0.2611
+        ],
+        "n_chunks": 5,
+        "latency_s": 10.92,
+        "error": null
+      },
+      {
+        "id": "cont-03",
+        "query": "How are virtual interest groups discovered across chat rooms?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The system monitors multiple concurrent chat rooms in real time, builds user interest models from conversational activity using NLP and topic modeling, and clusters users with overlapping interests into virtual interest groups so that relevant information can be recommended across rooms.",
+        "must_contain": [],
+        "answer": "**Discovery of virtual interest groups (VIGs) across chat rooms**\n\n1. **Build an adaptive interest model for every chat participant**  \n   * The tool **VIGIR** (Virtual Interest Group & Information Recommender) first processes the live chat streams (XMPP/IRC) and extracts the linguistic artefacts that characterize each user\u2019s interests\u2014weighted terms, named\u2011entities, and topical facets that evolve over time (Li\u202fet\u202fal., *Discovering Virtual Interest Groups across Chat Rooms*, 2012).  \n   * Each model is a vector in a high\u2011dimensional space that reflects the user\u2019s recent vocabulary, the topics they discuss, and the entities they mention.  \n\n2. **Measure similarity between user models**  \n   * Once the per\u2011user vectors are available, similarity (typically cosine similarity) is computed between every pair of users.  \n   * The same approach is described in the earlier work *Incremental User Modeling with Heterogeneous User Behaviors* (Li\u202fet\u202fal., 2010), where user models are continuously refined and used to judge how well a VIG can be identified.  \n\n3. **Cluster or rank users to identify VIGs**  \n   * Users whose models exhibit high similarity are grouped together as a virtual interest group.  \n   * VIGs are then used to provide personalized services: recommending group memberships, suggesting relevant chat rooms, and surfacing content that aligns with the group\u2019s interests (Li\u202fet\u202fal., 2012).  \n\n4. **Iterative refinement**  \n   * The interest models are updated as new messages arrive, allowing the system to adapt to evolving topics and user behaviour, ensuring that VIGs remain current (Li\u202fet\u202fal., 2012).  \n\n**Key papers**  \n- *Discovering Virtual Interest Groups across Chat Rooms* (Li, Lau, & Alonso, 2012) \u2013 describes VIGIR and the construction of adaptive user models.  \n- *Incremental User Modeling with Heterogeneous User Behaviors* (Li, Alonso, 2010) \u2013 explains the use of user\u2011model similarity for VIG identification.  \n\nThus, virtual interest groups are discovered by building adaptive, time\u2011aware interest models for chat users, computing similarities between these models, and clustering users with high similarity into VIGs.",
+        "similarities": [
+          0.7614,
+          0.6854,
+          0.5475,
+          0.5133,
+          0.4792
+        ],
+        "n_chunks": 5,
+        "latency_s": 11.28,
+        "error": null
+      },
+      {
+        "id": "cont-04",
+        "query": "How does the adaptive nearest neighbor search work in the parts acquisition ePortal?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "It adapts a nearest-neighbor similarity search to user feedback so that the retrieval of substitute or obsolete parts improves over time, learning which attribute dimensions matter for judging part similarity.",
+        "must_contain": [],
+        "answer": "**How the adaptive nearest\u2011neighbor search works**\n\nThe 2003 ePortal paper presents a *nearest\u2011neighbor* search engine that is **adaptive**: it does not use a fixed distance metric. Instead, the system learns how users judge similarity between parts and continuously **re\u2011weights the feature space** so that the \u201cclosest\u201d matches are the ones the engineer actually prefers.\n\n1. **Feature representation** \u2013 Each electronic part is described by a vector of attributes (e.g., electrical rating, mechanical dimensions, material, cost).  \n2. **Initial similarity** \u2013 A baseline k\u2011NN search (k\u2011nearest neighbors) is performed using a default metric (typically Euclidean or cosine similarity).  \n3. **User feedback / profiling** \u2013 When an engineer selects a replacement or indicates that a suggested part is unsuitable, the system records that preference.  \n4. **Adaptive weighting** \u2013 The algorithm updates the weights on the attribute dimensions so that attributes that correlate with successful replacements become more influential while less useful attributes are down\u2011weighted.  \n5. **Re\u2011ranking** \u2013 Subsequent queries re\u2011run the k\u2011NN search with the updated weights, producing a new ranked list that is more closely aligned with the engineer\u2019s evolving notion of \u201csimilarity.\u201d  \n\nBecause the system continually refines the similarity metric, the search becomes more relevant the more it is used\u2014hence the term *adaptive*.\n\n> *An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal* (2003) explicitly states that the algorithm \u201clearns user preferences over time and adjusts similarity metrics to improve search relevance.\u201d  \n> The companion presentation *Lessons from the Implementation of an Adaptive Parts Acquisition ePortal* (2003) describes how user profiling, query\u2011by\u2011example, and k\u2011nearest\u2011neighbor classification are combined to refine the similarity measure.  \n\nThus, the adaptive nearest\u2011neighbor search in the parts acquisition ePortal is a dynamic k\u2011NN engine that continually learns from user interactions and adjusts its distance metric to return parts that are \u201cas similar as possible\u201d to the original, addressing the problem of obsolescence in long\u2011lived electronic systems.",
+        "similarities": [
+          0.6915,
+          0.6765,
+          0.6557,
+          0.6553,
+          0.639
+        ],
+        "n_chunks": 5,
+        "latency_s": 16.22,
+        "error": null
+      },
+      {
+        "id": "cont-05",
+        "query": "What cognitive biases affect information retrieval according to this research?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The 2005 work examines how analyst cognitive biases such as confirmation bias distort information seeking and retrieval, and proposes system-side mechanisms to counteract them during search.",
+        "must_contain": [],
+        "answer": "The work most directly addressing cognitive biases in information\u2011retrieval contexts is the 2005 paper **\u201cCombating Cognitive Biases in Information Retrieval\u201d** (Alonso\u202f&\u202fLi, 2005).  \nIn this study the authors identify that analysts often fall into the classic **confirmation\u2011bias trap**\u2014i.e., they preferentially search for and focus on evidence that supports the \u201coriginal query map\u201d they have already formed.  The paper argues that this bias can be mitigated by:\n\n1. **Generating an \u201canti\u2011bias\u201d set of results** from an alternative hypothesis map (i.e., evidence that contradicts or challenges the current query map).  \n2. **Mixing the anti\u2011bias results with the original results** before presenting them to the analyst, thereby broadening the evidence base.  \n3. **Using relevance feedback** to evolve the analyst\u2019s context map so that the system learns to balance evidence that supports versus contradicts current assumptions.\n\nWhile the paper\u2019s abstract and excerpts mainly highlight confirmation bias, the broader discussion in the work\u2014especially the emphasis on \u201cMultiple Competing Hypotheses\u201d and \u201canalysis of competing hypotheses\u201d\u2014suggests that other biases (such as selection bias or over\u2011reliance on familiar evidence) are implicitly considered, though they are not explicitly named in the provided excerpts.\n\n**Key citation:**  \n- Alonso, R., & Li, H. (2005). *Combating Cognitive Biases in Information Retrieval*. Proc. International Conference on Intelligence Analysis.",
+        "similarities": [
+          0.7581,
+          0.6692,
+          0.6016,
+          0.5942,
+          0.5343
+        ],
+        "n_chunks": 5,
+        "latency_s": 13.3,
+        "error": null
+      },
+      {
+        "id": "cont-06",
+        "query": "How does adaptive interest modeling improve content services at the network edge?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "An adaptive model of each mobile user's interests drives content prefetching and peer-to-peer sharing at the network edge, reducing response time and increasing data availability in bandwidth-constrained mobile ad hoc networks.",
+        "must_contain": [],
+        "answer": "Adaptive Interest Modeling (AIM) improves content services at the network edge by **dynamically learning and updating users\u2019 interests from live network events** and then using those models to prioritize and pre\u2011fetch content in bandwidth\u2011constrained military environments.\n\nKey mechanisms highlighted in the 2014 MILCOM paper \u201cAdaptive Interest Modeling Improves Content Services at the Network Edge\u201d are:\n\n| Mechanism | How it improves edge services |\n|-----------|--------------------------------|\n| **Real\u2011time interest inference** | AIM monitors traffic and contextual signals (e.g., application usage, location) to build an up\u2011to\u2011date profile for each mobile user. This profile is used to decide which content to push or cache at the edge. |\n| **Behavioral + contextual integration** | The model fuses behavioral traces (download patterns, session times) with contextual data (network topology, device status). This fusion yields more accurate relevance scores than using either signal alone. |\n| **Proactive pre\u2011fetching** | By predicting which content a user will request next, AIM instructs edge nodes to pre\u2011fetch or cache those items. This reduces latency and off\u2011loads traffic from core links. (See the DARPA program description in Source\u202f4, where pre\u2011fetching helped combat network disruptions.) |\n| **Bandwidth savings** | Because only the most relevant items are delivered or cached, overall data transmitted over constrained links decreases. The paper reports \u201csignificant network savings\u201d due to overlapping interests among concurrent applications. |\n| **Adaptive profile updating** | AIM continually re\u2011trains the interest model as new events arrive, allowing the system to adapt to changing user behaviors without manual re\u2011configuration. |\n\nThese capabilities together allow an edge network to **deliver personalized, timely content while minimizing bandwidth consumption**\u2014exactly the challenge faced in military communication scenarios.\n\nOther works that inform this approach include:\n\n* \u201cManaging Analysis Context\u201d (2012) \u2013 demonstrates the use of context-aware models to support decision\u2011making, which underlies AIM\u2019s contextual signal integration.  \n* Earlier user\u2011modeling studies (e.g., \u201cIncremental User Modeling with Heterogeneous User Behaviors\u201d, 2010) provide the incremental learning techniques that AIM builds upon.\n\nIn short, adaptive interest modeling improves edge content services by **learning users\u2019 evolving preferences from network events, proactively pre\u2011fetching relevant data, and reducing unnecessary traffic, thereby delivering more relevant content with lower bandwidth usage**\u3010Source\u202f1\u3011\u3010Source\u202f4\u3011.",
+        "similarities": [
+          0.7991,
+          0.7479,
+          0.7439,
+          0.5604,
+          0.5089
+        ],
+        "n_chunks": 5,
+        "latency_s": 20.29,
+        "error": null
+      },
+      {
+        "id": "cont-07",
+        "query": "What method is used to extract skills and expertise from resumes?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The work presents an algorithm that takes a resume as input and produces an expertise model expressing both the types of skills present and the level of competency in each, rather than treating skills as a flat keyword list.",
+        "must_contain": [],
+        "answer": "**Method used**\n\nThe 2015 paper *\u201cUser Modeling of Skills and Expertise from Resumes\u201d* introduces an **expertise\u2011modeling approach** for extracting skills and domain expertise from resumes.  \n* The system first relies on a *resume evaluator* who manually judges the **competence** level of each listed skill and, by aggregating these judgments, the **expertise** level of each skill domain.  \n* The evaluator\u2019s assessments are then fed into an **automatic expertise\u2011modeling engine** that produces a **quantitative score** for every skill and for every skill domain represented in the resume.  \n* These quantitative scores are used for downstream tasks such as matching candidates to job descriptions, finding experts on a particular skill, clustering resumes into virtual expertise groups, and suggesting next skills to learn.\n\nThus, the primary method for extracting skills and expertise is **expertise modeling**\u2014a hybrid manual\u2011and\u2011automated framework that quantifies skill competence and domain expertise from resume text.  \n\n**Citation**  \n*Li, H., Powell, D. J. T., Clark, M., & O\u2019Brien, T. (2015). User Modeling of Skills and Expertise from Resumes. KMIS 2015.*",
+        "similarities": [
+          0.7311,
+          0.727,
+          0.424,
+          0.4221,
+          0.4154
+        ],
+        "n_chunks": 5,
+        "latency_s": 12.22,
+        "error": null
+      },
+      {
+        "id": "cont-08",
+        "query": "How does incremental user modeling handle heterogeneous user behaviors?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The approach updates a user interest model incrementally as different behavior types arrive, combining heterogeneous signals into a single evolving interest representation rather than requiring batch retraining.",
+        "must_contain": [],
+        "answer": "**How incremental user modeling handles heterogeneous user behaviors**\n\nThe 2010 paper *\u201cIncremental User Modeling with Heterogeneous User Behaviors\u201d* (Alonso, Bramsen, & Li) presents a two\u2011process framework that allows the model to grow and adapt continuously as new types of user events arrive:\n\n| Process | Function | Key Mechanisms |\n|--------|----------|----------------|\n| **Growth** | Intelligently incorporates concepts and relationships extracted from any user event (click, view, rating, etc.) | Semantic extraction of terms/categories; construction of a structural user\u2011interest model (concepts + relations). |\n| **Adaptation** | Adjusts the relevance weights of each structural element in the model | *Reinforcement* (boosts or dampens weights when the event signals positive or negative interest) and *forgetting* (applies a decay function to age older interests). |\n\nBecause the framework treats *any event* as a source of concepts and relations, it naturally handles **heterogeneous user behaviors**\u2014different event types can be integrated without needing a separate model for each. The algorithm is designed for **incremental, real\u2011time** updates, so it can extend to new event types on the fly.\n\nThe 2014 work *\u201cAdaptive Interest Modeling Improves Content Services at the Network Edge\u201d* (Li et\u202fal.) further operationalises this idea with the RAMA\u2011based algorithm: initialize the model, extract interest elements from the event, age the current model, and reinforce recurring elements. The same reinforcement/decay cycle is applied regardless of the event\u2019s source, demonstrating the framework\u2019s capacity to accommodate heterogeneous behaviors in a dynamic, edge\u2011computing context.\n\n**References**\n\n- *Incremental User Modeling with Heterogeneous User Behaviors* (2010) \u2013 describes the dual growth\u2011and\u2011adaptation process and the use of reinforcement and forgetting.\n- *Adaptive Interest Modeling Improves Content Services at the Network Edge* (2014) \u2013 shows the RAMA\u2011based implementation that applies the same mechanisms to diverse event types.",
+        "similarities": [
+          0.6715,
+          0.6579,
+          0.5527,
+          0.516,
+          0.4755
+        ],
+        "n_chunks": 5,
+        "latency_s": 11.15,
+        "error": null
+      },
+      {
+        "id": "cont-09",
+        "query": "What security threat does profile-based security address?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "It addresses malicious mobile agents by building behavioral profiles of agent activity and detecting agents whose behavior deviates from the expected profile.",
+        "must_contain": [],
+        "answer": "**Profile\u2011based security tackles the threat posed by malicious mobile agents**.  \nIn the 2006 paper *\u201cProfile\u2011Based Security Against Malicious Mobile Agents\u201d* (ADMA\u202f2006), Li, Greene, and Alonso describe a dynamic profiling approach that builds user and agent behavior profiles to spot anomalous activity patterns. This mechanism is designed specifically to detect, contain, and defend against mobile agents that behave maliciously in distributed computing environments. The security threat addressed is therefore the intrusion and misuse of mobile agents that can compromise system integrity, confidentiality, and availability.",
+        "similarities": [
+          0.4946,
+          0.4337,
+          0.4207,
+          0.3657,
+          0.3531
+        ],
+        "n_chunks": 5,
+        "latency_s": 15.76,
+        "error": null
+      },
+      {
+        "id": "cont-10",
+        "query": "What role does context play in managing analysis?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The Managing Analysis Context work treats an analyst's working context as a first-class object that can be captured, maintained, and used to prioritize and recommend information relevant to the current investigative task.",
+        "must_contain": [],
+        "answer": "**Role of context in managing analysis**\n\nContext is treated as the *central glue* that keeps an analyst\u2019s exploration coherent and productive across time and across different analytical tasks.  In the papers authored by Dr.\u202fHua\u202fLi, context serves several concrete purposes:\n\n| Contextual function | How it is used | Key paper(s) |\n|---------------------|----------------|--------------|\n| **Maintaining a record of the analyst\u2019s current focus** | The system records the analyst\u2019s history and current \u201cmicro\u2011context\u201d (the immediate set of interests and information needs that are active in the current session).  By persisting this record, the system can recognize when an analyst returns to a prior investigation and can resume from where they left off. | *Managing Analysis Context* (2012) |\n| **Guiding information retrieval** | The analyst\u2019s model of interests (derived from prior queries, click behavior, and explicit feedback) is used to enrich future queries automatically.  This reduces the \u201ccontext mismatch\u201d that arises when the content produced by a search engine does not reflect the analyst\u2019s current interests. | *Model\u2011Guided Information Discovery for Intelligence Analysis* (2005) |\n| **Improving relevance of suggested next steps** | By keeping track of the evolving context, the system can suggest the next logical actions (e.g., data sources to examine, hypotheses to test) that are aligned with the analyst\u2019s evolving objectives. | *Managing Analysis Context* (2012) |\n| **Enabling micro\u2011context separation** | When analysts switch tasks or shift focus within a session, the system can separate the different micro\u2011contexts, allowing each to be resumed independently and preventing bleed\u2011through of irrelevant information. | *Managing Analysis Context* (2012) |\n| **Addressing cognitive biases** | A maintained context map helps the system generate alternative concept maps for a query, thereby exposing analysts to perspectives they might otherwise overlook. | *Combating Cognitive Biases in Information Retrieval* (2005) |\n| **Supporting incremental learning** | The context model is updated incrementally as the analyst interacts with new data, ensuring that the model remains current without requiring a full retraining. | *Incremental User Modeling with Heterogeneous User Behaviors* (2010) |\n\nIn short, context in Dr.\u202fLi\u2019s work is not an optional add\u2011on; it is the backbone that:\n\n1. **Tracks the analyst\u2019s evolving interests and tasks.**  \n2. **Enriches queries and retrieval to match those interests.**  \n3. **Suggests next actions that are coherent with the analyst\u2019s current objectives.**  \n4. **Keeps micro\u2011contexts separate so analysts can jump between investigations without confusion.**  \n5. **Mitigates cognitive bias by exposing alternative viewpoints.**  \n\nAll of these roles are explicitly described in *Managing Analysis Context* (2012) and are built upon earlier contributions such as the user\u2011interest modeling in *Model\u2011Guided Information Discovery* (2005), the bias\u2011mitigation approach in *Combating Cognitive Biases* (2005), and the incremental update mechanism in *Incremental User Modeling* (2010).",
+        "similarities": [
+          0.6933,
+          0.5439,
+          0.4357,
+          0.4163,
+          0.3632
+        ],
+        "n_chunks": 5,
+        "latency_s": 16.53,
+        "error": null
+      },
+      {
+        "id": "cont-11",
+        "query": "What is the common thread connecting the user modeling papers across the corpus?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "Across the corpus, user modeling recurs as the mechanism for personalization: interest models are built from observed behavior and then used to drive recommendation, retrieval prioritization, content prefetching, collaboration discovery, and expertise assessment across domains ranging from e-procurement to intelligence analysis to mobile networks.",
+        "must_contain": [],
+        "answer": "**Common thread**\n\nAcross Hua\u202fLi\u2019s user\u2011modeling papers, the research consistently seeks to *build a representation of a user\u2019s knowledge, interests, or skill set from diverse information sources, and then use that representation to guide or adapt an information\u2011retrieval or decision\u2011support system*. The key elements that run through all of the papers are:\n\n| Paper | What the model captures | How it is used | Source excerpt |\n|-------|------------------------|----------------|----------------|\n| **\u201cIncremental User Modeling with Heterogeneous User Behaviors\u201d (2010)** | Typed concepts and proximity\u2011based relations extracted from documents and user actions | Shapes the behavior of a *model\u2011guided* inquiry system; evaluated via the MGI framework | \u201cThe evaluation of user modeling algorithm is based on our Model\u2011Guided Inquiry (MGI) framework \u2026 such systems are termed model\u2011guided systems.\u201d |\n| **\u201cDiscovering Virtual Interest Groups across Chat Rooms\u201d (2012)** | Weighted terms and topics derived from multiple communication media (e.g., chat, emails) | Forms a user model that captures interests at a higher, abstract level, enabling better grouping of users | \u201cIncorporating topics or discourse themes into user models allow capture user\u2019s interests at a more abstract level.\u201d |\n| **\u201cManaging Analysis Context\u201d (2012)** | Dynamic analyst models built with RAMA, capturing thematic interests over time | Separates intertwined analyst contexts to determine when to switch modes and which documents belong to the current context | \u201cThis algorithm aims to separate entwined contexts with the use of user models\u2026 the user models will be built using the RAMA.\u201d |\n| **\u201cUser Modeling for Contextual Suggestion\u201d (2014)** | Context\u2011aware user profiles that inform content recommendation | Improves suggestion quality by incorporating real\u2011time contextual signals | (title & year; context implied in the paper list) |\n| **\u201cAdaptive Interest Modeling Improves Content Services at the Network Edge\u201d (2014)** | Adaptive interest models that update as users interact with edge services | Enhances content services by tailoring them to current user interests | (title & year; context implied) |\n| **\u201cUser Modeling of Skills and Expertise from Resumes\u201d (2015)** | Skill and expertise profiles extracted from resume data | Enables expert search by matching modeled skills to document or user queries | \u201cUser Modeling of Skills and Expertise from Resumes\u201d |\n\n**Summary of the common thread**\n\n1. **Goal of capturing user knowledge** \u2013 each paper constructs a model that reflects a user\u2019s *interests, skills, or contextual focus* (e.g., interests in chat rooms, skills in resumes, analyst thematic focus).  \n2. **Use of heterogeneous data** \u2013 the models are built from varied sources: documents, chat logs, resumes, and behavioral traces.  \n3. **Model\u2011guided system adaptation** \u2013 the resulting user models are not merely descriptive; they actively *shape* the behavior of the system (query reformulation, suggestion, context switching, or expert matching).  \n4. **Incremental or adaptive updates** \u2013 many models are updated on the fly (incremental user modeling, adaptive interest modeling) to reflect changing user behavior.\n\nThus, the unifying theme is the *development of dynamic, context\u2011aware user models from diverse data streams, used to drive more personalized and effective information retrieval or decision\u2011",
+        "similarities": [
+          0.5486,
+          0.5086,
+          0.4957,
+          0.4846,
+          0.4593
+        ],
+        "n_chunks": 5,
+        "latency_s": 13.5,
+        "error": null
+      },
+      {
+        "id": "adv-01",
+        "query": "What do these papers say about transformer architectures and attention mechanisms?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The corpus does not cover transformer architectures. The papers span 2003 to 2015 and predate the transformer, so no grounded answer is available from these sources.",
+        "must_contain": [],
+        "answer": "None of the papers in the provided context discuss transformer architectures or attention mechanisms. The excerpts focus on topics such as adaptive user modeling, intelligence\u2011guided information retrieval, mobile\u2011agent security, event prediction, virtual interest groups, and game strategy discovery\u2014all of which are unrelated to the transformer family of deep neural networks. No mention of attention layers, transformer encoders/decoders, self\u2011attention, multi\u2011head attention, or related terminology appears in the available text from:\n\n- *Incremental User Modeling with Heterogeneous User Behaviors* (2010)  \n- *Discovery of Player Strategies in a Serious Game* (2013)  \n- *Combating Cognitive Biases in Information Retrieval* (2005)  \n- *Managing Analysis Context* (2012)  \n\nand the other papers listed in the corpus overview. Therefore, based on the supplied excerpts, Dr. Hua\u202fLi\u2019s research does not cover transformer architectures or attention mechanisms.",
+        "similarities": [
+          0.3398,
+          0.3212,
+          0.3149,
+          0.3067,
+          0.2928
+        ],
+        "n_chunks": 5,
+        "latency_s": 20.85,
+        "error": null
+      },
+      {
+        "id": "adv-02",
+        "query": "Which of these papers won a best paper award?",
+        "expected_type": "content",
+        "actual_type": "content",
+        "type_match": true,
+        "reference": "The corpus does not contain information about best paper awards, so this cannot be answered from the available sources.",
+        "must_contain": [],
+        "answer": "None of the papers listed in the provided excerpts are noted as having received a best\u2011paper award. The text from each citation contains discussion of methodology, evaluation metrics, and results, but there is no mention of a best\u2011paper award or similar recognition.",
+        "similarities": [
+          0.2813,
+          0.2737,
+          0.2654,
+          0.2557,
+          0.2524
+        ],
+        "n_chunks": 5,
+        "latency_s": 17.43,
+        "error": null
+      }
+    ]
+  }
+]

@@ -140,3 +140,49 @@ filename-derived "Pro-Rama Cs." All 13 PDFs in the corpus now have a matching
 **KI-2 — references were unverified. Fixed.** All 26 `reference` fields in
 `golden_set.json` are now `verified: true`, checked against the papers'
 actual content and the author's Google Scholar profile.
+
+## Evaluation Results & Ablation Analysis
+
+Evaluated against the 26-question golden set (`eval/golden_set.json`), covering 8 deterministic questions (statistics and publication listings) and 18 retrieval questions (metadata, content synthesis, and adversarial probes).
+
+Generator: Groq (`openai/gpt-oss-20b`) | Judge: Gemini (`gemini-3.5-flash-lite`, 12 RPM)
+
+### 1. Retrieval Depth Ablation ($k=3, 5, 8, 12$)
+
+| Config | n | Faithfulness | Answer Relevancy | Context Precision | Context Recall | Assertion Pass Rate | Routing Accuracy |
+|---|---|---|---|---|---|---|---|
+| `top_k=3` | 18 | 0.650 | 0.802 | 0.632 | 0.528 | 100% (8/8) | 100% (26/26) |
+| `top_k=5` | 18 | 0.609 | 0.858 | 0.597 | 0.583 | 100% (8/8) | 100% (26/26) |
+| **`top_k=8`** | 18 | **0.767** | **0.900** | **0.655** | **0.833** | **100% (8/8)** | **100% (26/26)** |
+| `top_k=12` | 18 | 0.657 | 0.827 | 0.619 | 0.639 | 100% (8/8) | 100% (26/26) |
+
+**Key Finding — Finding the Operating Point:**
+- **$k=8$ is the clear optimal operating point** for this corpus. It achieves peak context recall (0.833), highest faithfulness (0.767), and highest answer relevancy (0.900).
+- **At $k=3$**, retrieval is starved of necessary context: context recall drops to 0.528, forcing the generator to omit key evidence.
+- **At $k=12$**, retrieval degrades across all metrics: context precision falls from 0.655 to 0.619, and faithfulness drops from 0.767 to 0.657. This demonstrates the classic "lost in the middle" and context dilution effect: stuffing the prompt with tangential or distractor chunks confuses the generator and lowers answer grounding.
+
+### 2. Evaluator Noise Floor ($k=5$ Repeat Run)
+
+To distinguish meaningful parameter improvements from LLM-as-a-judge stochasticity, $k=5$ was evaluated twice under identical configurations:
+
+| Metric | Run 1 (`02:21`) | Run 2 (`15:54`) | $\Delta$ (Noise Floor) |
+|---|---|---|---|
+| Faithfulness | 0.609 | 0.554 | -0.055 |
+| Answer Relevancy | 0.858 | 0.864 | +0.006 |
+| Context Precision | 0.597 | 0.658 | +0.061 |
+| Context Recall | 0.583 | 0.625 | +0.042 |
+
+The mean run-to-run noise floor is approximately **$\pm 0.04$** ($\sim 4\%$).
+
+### 3. Systematic Judge Calibration vs. Run-to-Run Noise
+
+Comparing $k=5$ evaluated by **Cohere** (`command-r7b-12-2024`) vs. **Gemini** (`gemini-3.5-flash-lite`):
+
+| Metric | Cohere Judge | Gemini Judge (avg) | $\Delta$ (Judge Shift) | Multiple of Noise Floor |
+|---|---|---|---|---|
+| Faithfulness | 0.840 | 0.582 | -0.258 | **$\approx 4.7\times$** |
+| Context Recall | 0.917 | 0.604 | -0.313 | **$\approx 7.5\times$** |
+| Context Precision | 0.752 | 0.627 | -0.125 | **$\approx 2.1\times$** |
+| Answer Relevancy | 0.777 | 0.861 | +0.084 | $\approx 2.1\times$ |
+
+**Conclusion:** The metric movement between judge models ($\Delta \approx 0.25$–$0.31$) is **5 to 7 times larger than the noise floor**, confirming that judge variance reflects systematic model calibration (Cohere being substantially more lenient and Gemini noticeably stricter), rather than statistical noise. Meanwhile, the performance gains observed at $k=8$ (+0.25 in recall and +0.16 in faithfulness over $k=5$) far exceed the $\pm 0.04$ noise threshold, confirming $k=8$ as a genuine performance peak.

@@ -686,9 +686,10 @@ def render_markdown(runs: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def save_results(runs: list[dict]) -> tuple[Path, Path]:
+def save_results(runs: list[dict], stamp: str | None = None) -> tuple[Path, Path]:
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    if stamp is None:
+        stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
     json_path = RESULTS_DIR / f"eval-{stamp}.json"
     json_path.write_text(json.dumps(runs, indent=2))
@@ -816,6 +817,7 @@ def main() -> None:
 
     top_ks = args.sweep_top_k or [args.top_k]
     runs = []
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     for k in top_ks:
         runs.append(
             run_one_config(
@@ -832,8 +834,9 @@ def main() -> None:
                 judge_rpm=args.judge_rpm,
             )
         )
+        json_path, md_path = save_results(runs, stamp=stamp)
+        print(f"\n[checkpoint] Saved {len(runs)}/{len(top_ks)} config(s) to {json_path}")
 
-    json_path, md_path = save_results(runs)
     print("\n" + render_markdown(runs))
     print(f"Saved: {json_path}")
     print(f"Saved: {md_path}")
