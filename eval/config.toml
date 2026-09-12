@@ -29,24 +29,24 @@ model = ""
 # (see README.md "Judge independence") — set explicitly to pin one.
 # Options: auto, gemini, anthropic, openai, cohere, groq, mistral
 #
-# Pinned to cohere. Backend history for this project, in case cohere also
-# doesn't pan out:
-#   - gemini: confirmed via AI Studio's Rate Limit dashboard that this
-#     project is capped at 20 requests/day *account-wide*, across every
-#     model. Needs billing enabled to lift; deferred by the user for now.
+# Pinned to gemini with the "Flash Lite" model specifically. Backend history
+# for this project, in case this also runs dry:
+#   - gemini NON-lite models (e.g. gemini-3.6-flash): 20 requests/DAY on this
+#     account — far too few for a sweep. But the "Flash Lite" models sit in a
+#     separate, much larger quota bucket: 15 RPM / 250K TPM / 500 RPD
+#     (verified in AI Studio's Rate Limit dashboard). 500 RPD covers a
+#     multi-config sweep's ~216 judge calls with headroom.
+#   - cohere trial key: 1,000 calls/MONTH — exhausted across this session's
+#     many runs; a single call now 429s with 14/20 per-minute remaining,
+#     confirming the monthly cap (not the per-minute one) is the wall.
 #   - groq (same backend as generator): shares a 200K tokens/day budget with
 #     generation, so judging exhausts the account's daily quota mid-run.
-#   - mistral: technically has quota, but every one of 68 judge calls hit a
-#     429 across a full ~3 hour run (raise_exceptions=False silently turned
-#     all of them into None scores rather than failing loudly — see KI-3 in
-#     eval/README.md). Functionally unusable for this workload right now.
-# cohere's trial key: 20 requests/minute, 1,000 calls/month (confirmed at
-# docs.cohere.com/v2/docs/rate-limits). No punishing daily cap like gemini/
-# sambanova, and 20 RPM is not a bottleneck for a sequential (max_workers=1)
-# ~70-call judge run — each RAGAS judge call takes longer than the 3s/req
-# that 20 RPM allows anyway.
-backend = "cohere"
-model = ""
+#   - mistral: every one of 68 judge calls 429'd across a full run.
+#   - cerebras: requires billing (PayGo) — API returns 402 without it.
+# judge model is set explicitly below because the Flash Lite quota only
+# applies to the Lite model IDs, not the default gemini-3.6-flash.
+backend = "gemini"
+model = "gemini-3.5-flash-lite"
 
 [eval]
 top_k = 5

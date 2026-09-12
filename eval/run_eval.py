@@ -45,6 +45,13 @@ workers, which will exhaust that budget within seconds and produce a wall of
 429s that look like evaluation failures. This harness pins max_workers to 1
 and throttles generation by default. A full 25-question run takes roughly
 10-15 minutes on free tier. Use --max-workers to raise it on a paid key.
+
+Note that max_workers bounds *concurrency*, not *request rate* — even
+sequentially, judge calls completing in a few seconds each will exceed a
+20 req/min ceiling. Judge calls are therefore separately rate-limited via
+--judge-rpm (per-backend defaults in _JUDGE_RPM_DEFAULTS). This matters most
+for --sweep-top-k, which multiplies the judge call count by the number of
+configs.
 """
 
 from __future__ import annotations
@@ -318,13 +325,62 @@ def resolve_judge_backend(requested: str, generator_backend: str) -> tuple[str, 
     )
 
 
+# ── Judge rate limiting ───────────────────────────────────────────────────────
+# max_workers caps *concurrency*, not *request rate*. Even at max_workers=1,
+# sequential judge calls finishing in 3-8s each burst well past a 20 req/min
+# free-tier ceiling. A single-config run (72 judge jobs) can slip under the
+# wire; a --sweep-top-k run (4 configs, ~288 jobs) will not.
+#
+# Observed failure mode without this: Cohere started returning 429s
+# (x-trial-endpoint-call-limit: 20, x-trial-endpoint-call-remaining: 3) and
+# per-job time degraded 8s -> 63s -> 106s as retries compounded, turning a
+# ~60 min sweep into a 4+ hour one.
+#
+# Requests/minute per backend, from each provider's published free-tier limits.
+# Deliberately set slightly under the documented ceiling to leave headroom for
+# RAGAS's own internal retries, which also consume quota.
+_JUDGE_RPM_DEFAULTS = {
+    "cohere":    18,   # trial: 20 req/min  (docs.cohere.com/v2/docs/rate-limits)
+    "gemini":    12,   # free tier: ~15 req/min, but see the per-day cap note in config.toml
+    "groq":      25,   # free tier: ~30 req/min
+    "mistral":   10,   # free tier is stricter in practice than documented
+    "openai":    60,   # paid tier-1 is far higher; this is just a sane default
+    "anthropic": 45,
+}
+
+
+def build_rate_limiter(backend: str, rpm: float | None = None):
+    """
+    Token-bucket rate limiter for judge calls, or None to disable.
+
+    rpm=0 explicitly disables limiting (useful on paid keys). rpm=None uses
+    the backend's default from _JUDGE_RPM_DEFAULTS.
+    """
+    if rpm is None:
+        rpm = _JUDGE_RPM_DEFAULTS.get(backend, 15)
+    if not rpm:
+        return None
+
+    from langchain_core.rate_limiters import InMemoryRateLimiter
+
+    return InMemoryRateLimiter(
+        requests_per_second=rpm / 60.0,
+        check_every_n_seconds=0.1,
+        # Allow a small burst so short gaps between calls aren't wasted, but
+        # not enough to blow the per-minute window on its own.
+        max_bucket_size=max(1.0, rpm / 10.0),
+    )
+
+
 # ── Judge LLM ─────────────────────────────────────────────────────────────────
 # The judge should ideally differ from the generator, so the model is not
 # grading its own output. Default is Gemini for both because the free tier makes
 # that the only zero-cost option; pass --judge-backend to separate them.
 
-def build_judge_llm(backend: str, model: str | None):
+def build_judge_llm(backend: str, model: str | None, judge_rpm: float | None = None):
     from ragas.llms import LangchainLLMWrapper
+
+    rate_limiter = build_rate_limiter(backend, judge_rpm)
 
     if backend == "gemini":
         from langchain_google_genai import ChatGoogleGenerativeAI
@@ -336,6 +392,7 @@ def build_judge_llm(backend: str, model: str | None):
                 model=model or "gemini-3.6-flash",
                 google_api_key=os.environ["GEMINI_API_KEY"],
                 temperature=0.0,
+                rate_limiter=rate_limiter,
             )
         )
 
@@ -343,14 +400,16 @@ def build_judge_llm(backend: str, model: str | None):
         from langchain_openai import ChatOpenAI
 
         return LangchainLLMWrapper(
-            ChatOpenAI(model=model or "gpt-4o-mini", temperature=0.0)
+            ChatOpenAI(model=model or "gpt-4o-mini", temperature=0.0,
+                       rate_limiter=rate_limiter)
         )
 
     if backend == "anthropic":
         from langchain_anthropic import ChatAnthropic
 
         return LangchainLLMWrapper(
-            ChatAnthropic(model=model or "claude-haiku-4-5-20251001", temperature=0.0)
+            ChatAnthropic(model=model or "claude-haiku-4-5-20251001", temperature=0.0,
+                          rate_limiter=rate_limiter)
         )
 
     if backend == "cohere":
@@ -364,6 +423,7 @@ def build_judge_llm(backend: str, model: str | None):
                 model=model or "command-r7b-12-2024",
                 cohere_api_key=os.environ["COHERE_API_KEY"],
                 temperature=0.0,
+                rate_limiter=rate_limiter,
             )
         )
 
@@ -379,6 +439,7 @@ def build_judge_llm(backend: str, model: str | None):
                 api_key=os.environ["GROQ_API_KEY"],
                 base_url="https://api.groq.com/openai/v1",
                 temperature=0.0,
+                rate_limiter=rate_limiter,
             )
         )
 
@@ -391,6 +452,7 @@ def build_judge_llm(backend: str, model: str | None):
                 api_key=os.environ["MISTRAL_API_KEY"],
                 base_url="https://api.mistral.ai/v1",
                 temperature=0.0,
+                rate_limiter=rate_limiter,
             )
         )
 
@@ -433,6 +495,7 @@ def score_rag_track(
     judge_backend: str,
     judge_model: str | None,
     max_workers: int,
+    judge_rpm: float | None = None,
 ) -> dict[str, Any]:
     from ragas import EvaluationDataset, SingleTurnSample, evaluate
     from ragas.metrics import (
@@ -462,7 +525,7 @@ def score_rag_track(
         ]
     )
 
-    llm = build_judge_llm(judge_backend, judge_model)
+    llm = build_judge_llm(judge_backend, judge_model, judge_rpm)
     embeddings = build_embeddings()
 
     # max_workers=1 keeps free-tier judges inside their rate limit; the long
@@ -652,6 +715,7 @@ def run_one_config(
     judge_model: str | None,
     max_workers: int,
     throttle: float,
+    judge_rpm: float | None = None,
 ) -> dict:
     print(f"\n=== {label} ===")
     print(f"Generating answers (backend={backend}, model={model}, top_k={top_k})")
@@ -668,9 +732,13 @@ def run_one_config(
     }
 
     if track in {"all", "rag"}:
+        effective_rpm = (judge_rpm if judge_rpm is not None
+                         else _JUDGE_RPM_DEFAULTS.get(judge_backend, 15))
         print(f"\nScoring {len(rag_records)} samples with RAGAS "
-              f"(judge={judge_backend}, workers={max_workers})")
-        ragas_scores = score_rag_track(rag_records, judge_backend, judge_model, max_workers)
+              f"(judge={judge_backend}, workers={max_workers}, "
+              f"rate_limit={effective_rpm or 'off'} req/min)")
+        ragas_scores = score_rag_track(rag_records, judge_backend, judge_model,
+                                       max_workers, judge_rpm)
     else:
         ragas_scores = {"n": 0, "skipped": [], "scores": {}, "rows": []}
 
@@ -681,6 +749,8 @@ def run_one_config(
             "model": model,
             "top_k": top_k,
             "judge_backend": judge_backend,
+            "judge_rpm": (judge_rpm if judge_rpm is not None
+                          else _JUDGE_RPM_DEFAULTS.get(judge_backend, 15)),
             "embed_model": rag.EMBED_MODEL,
         },
         "rag_track": ragas_scores,
@@ -716,6 +786,10 @@ def main() -> None:
                    help="RAGAS parallelism. Keep at 1 for free-tier judges.")
     p.add_argument("--throttle", type=float, default=eval_cfg.get("throttle", 1.0),
                    help="Seconds to sleep between generation calls")
+    p.add_argument("--judge-rpm", type=float, default=judge_cfg.get("rpm"),
+                   help="Judge requests/minute cap. Defaults to a per-backend value "
+                        "based on that provider's free-tier limit; pass 0 to disable "
+                        "(paid keys). max_workers alone does NOT bound request rate.")
     p.add_argument("--limit", type=int, default=None, help="Evaluate only the first N questions")
     args = p.parse_args()
 
@@ -755,6 +829,7 @@ def main() -> None:
                 judge_model=judge_model,
                 max_workers=args.max_workers,
                 throttle=args.throttle,
+                judge_rpm=args.judge_rpm,
             )
         )
 
