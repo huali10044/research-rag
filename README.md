@@ -63,17 +63,20 @@ streamlit run app.py
 ```
 research-rag/
 ├── app.py                    # Streamlit web UI
+├── config.toml               # App configuration & fallback defaults
 ├── requirements.txt
 ├── src/
 │   ├── ingest.py             # Ingestion pipeline (load → chunk → embed → store)
 │   ├── rag.py                # Retrieval + generation pipeline
-│   └── papers_metadata.py    # Structured paper metadata
+│   └── papers_metadata.py    # Structured paper metadata & verified venues
 ├── data/
-│   ├── papers/               # Drop your PDFs here
-│   ├── processed/            # Intermediate outputs
-│   └── chroma_db/            # Vector store (auto-created)
-└── notebooks/
-    └── exploration.ipynb     # End-to-end walkthrough + evaluation
+│   ├── corpus_stats.json     # Verified corpus statistics (15 works, 26.8k words)
+│   └── chroma_db/            # In-process vector store (auto-created)
+└── eval/
+    ├── run_eval.py           # Two-track evaluation harness with rate limiting
+    ├── golden_set.json       # 26 verified test queries across 4 strategies
+    ├── config.toml           # Evaluation & judge configuration
+    └── results/              # Evaluation run artifacts & combined sweep records
 ```
 
 ## Sample queries
