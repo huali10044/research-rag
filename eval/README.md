@@ -147,57 +147,50 @@ Evaluated against the 26-question golden set (`eval/golden_set.json`), covering 
 
 Generator: Groq (`openai/gpt-oss-20b`) | Judge: Gemini (`gemini-3.5-flash-lite`, 12 RPM)
 
-### 1. Retrieval Depth Ablation ($k=3, 5, 8, 12$)
+### 1. Retrieval Depth Sweep ($k=3, 5, 8, 12$)
 
-| Config | n | Faithfulness | Answer Relevancy | Context Precision | Context Recall | Assertion Pass Rate | Routing Accuracy |
+Initial single-pass ablation across retrieval depth configurations ($n=18$ scorable queries per run):
+
+| Config | n (runs) | Faithfulness | Answer Relevancy | Context Precision | Context Recall | Assertion Pass Rate | Routing Accuracy |
 |---|---|---|---|---|---|---|---|
-| `top_k=3` | 18 | 0.650 | 0.802 | 0.632 | 0.528 | 100% (8/8) | 100% (26/26) |
-| `top_k=5` | 18 | 0.609 | 0.858 | 0.597 | 0.583 | 100% (8/8) | 100% (26/26) |
-| **`top_k=8`** | 18 | **0.767** | **0.900** | **0.655** | **0.833** | **100% (8/8)** | **100% (26/26)** |
-| `top_k=12` | 18 | 0.657 | 0.827 | 0.619 | 0.639 | 100% (8/8) | 100% (26/26) |
+| `top_k=3` | 1 | 0.650 | 0.802 | 0.632 | 0.528 | 100% (8/8) | 100% (26/26) |
+| `top_k=5` | 2 (mean) | 0.582 | 0.861 | 0.627 | 0.604 | 100% (8/8) | 100% (26/26) |
+| `top_k=8` | 3 (mean) | 0.666 | 0.846 | 0.642 | 0.690 | 100% (8/8) | 100% (26/26) |
+| `top_k=12` | 1 | 0.657 | 0.827 | 0.619 | 0.639 | 100% (8/8) | 100% (26/26) |
 
-**Key Finding — Finding the Operating Point:**
-- **$k=8$ is the clear optimal operating point** for this corpus. It achieves peak context recall (0.833), highest faithfulness (0.767), and highest answer relevancy (0.900).
-- **At $k=3$**, retrieval is starved of necessary context: context recall drops to 0.528, forcing the generator to omit key evidence.
-- **At $k=12$**, retrieval degrades across all metrics: context precision falls from 0.655 to 0.619, and faithfulness drops from 0.767 to 0.657. This demonstrates the classic "lost in the middle" and context dilution effect: stuffing the prompt with tangential or distractor chunks confuses the generator and lowers answer grounding.
+Across repeated runs, `top_k=8` achieved the highest mean score on three of the four RAGAS metrics (faithfulness, context precision, and context recall; `top_k=5` achieved highest mean answer relevancy). However, as shown below, the within-configuration variability across repeated runs was substantial, and the available data do not establish statistically significant superiority over `top_k=12` or `top_k=5`. We therefore treat `top_k=8` as the candidate operating point for confirmatory paired evaluation on a larger query set.
 
-### 2. Evaluator Drift Across Repeated Runs ($k=5$ Repeat)
+Only two structural observations are unambiguous:
+1. **$k=3$ under-retrieves**: context recall is the lowest across every evaluated run (0.528), demonstrating context starvation when retrieval depth is too shallow.
+2. **Deterministic assertions and routing show zero variance**: All 7 runs achieved 100% pass rates (8/8 assertions, 26/26 routing decisions), confirming that system logic and routing are robust while LLM-judged metrics carry nearly all the observed uncertainty.
 
-To distinguish meaningful parameter improvements from LLM-as-a-judge stochasticity, $k=5$ was evaluated twice under identical configurations (same Groq generator, same Gemini Flash Lite judge):
+### 2. Multi-Run Variability at the Candidate Operating Point ($n=3$ Runs at $k=8$)
 
-| Metric | Run 1 (`02:21`) | Run 2 (`15:54`) | $|\Delta|$ (Observed Drift) |
-|---|---|---|---|
-| Faithfulness | 0.609 | 0.554 | 0.055 |
-| Answer Relevancy | 0.858 | 0.864 | 0.006 |
-| Context Precision | 0.597 | 0.658 | 0.061 |
-| Context Recall | 0.583 | 0.625 | 0.042 |
+Evaluating `top_k=8` across three identical runs (Groq generator, Gemini Flash Lite judge) reveals substantial stochastic drift:
 
-A single same-config repeat drifted between **0.006 and 0.061** across metrics. This establishes that evaluator stability varies substantially by metric: answer relevancy is tightly bounded ($<0.01$), whereas faithfulness and context precision exhibit up to $\sim 0.06$ drift between runs without any change in code or parameters.
+| Metric | Run 1 | Run 2 | Run 3 | Mean ($\bar{x}$) | Sample Std Dev ($s$) | Observed Range $[x_\min, x_\max]$ | Range Spread |
+|---|---|---|---|---|---|---|---|
+| **Faithfulness** | 0.767 | 0.590 | 0.640 | 0.666 | 0.091 | $[0.590, 0.767]$ | 0.176 |
+| **Answer Relevancy** | 0.900 | 0.804 | 0.835 | 0.846 | 0.049 | $[0.804, 0.900]$ | 0.096 |
+| **Context Precision** | 0.655 | 0.585 | 0.687 | 0.642 | 0.052 | $[0.585, 0.687]$ | 0.102 |
+| **Context Recall** | 0.833 | 0.611 | 0.625 | 0.690 | 0.124 | $[0.611, 0.833]$ | 0.222 |
+
+**Key Finding — Noise Overwhelms Single-Run Margins:**
+- The margins of `top_k=8`'s mean over `top_k=12` (+0.009 faithfulness, +0.019 relevancy, +0.023 precision, +0.051 recall) range between **0.10 and 0.44 standard deviations** of `top_k=8` itself.
+- On every metric, the within-configuration range at $k=8$ ($0.096$–$0.222$) exceeds the descriptive margin between configurations ($0.009$–$0.051$). The appearance of a clean peak in single-pass sweeps was heavily influenced by Run 1 drawing high (e.g., recall 0.833 vs. 0.611–0.625 on subsequent runs).
+- `[min, max]` reflects the observed sample range of this specific test run, not a formal confidence interval.
 
 ### 3. Systematic Judge Calibration vs. Run-to-Run Drift
 
-Comparing $k=5$ evaluated by **Cohere** (`command-r7b-12-2024`) vs. **Gemini** (`gemini-3.5-flash-lite`):
+Comparing $k=5$ evaluated by **Cohere** (`command-r7b-12-2024`, $n=1$) vs. **Gemini** (`gemini-3.5-flash-lite`, $n=2$ mean):
 
-| Metric | Cohere Judge | Gemini Judge (avg) | $|\Delta|$ (Judge Shift) | Multiple of Measured Drift ($|\Delta_\text{judge}| / |\Delta_\text{drift}|$) |
-|---|---|---|---|---|
-| Faithfulness | 0.840 | 0.582 | 0.258 | **$\approx 4.7\times$** |
-| Context Recall | 0.917 | 0.604 | 0.313 | **$\approx 7.5\times$** |
-| Context Precision | 0.752 | 0.627 | 0.125 | **$\approx 2.0\times$** |
-| Answer Relevancy | 0.777 | 0.861 | 0.084 | **$\approx 14.0\times$** |
+| Metric | Cohere Judge ($n=1$) | Gemini Judge (mean, $n=2$) | $|\Delta|$ (Judge Difference) | $k=8$ Run-to-Run Std Dev ($s$) | Ratio ($|\Delta| / s$) |
+|---|---|---|---|---|---|
+| Faithfulness | 0.840 | 0.582 | 0.258 | 0.091 | $\approx 2.8\times$ |
+| Context Recall | 0.917 | 0.604 | 0.313 | 0.124 | $\approx 2.5\times$ |
+| Context Precision | 0.752 | 0.627 | 0.125 | 0.052 | $\approx 2.4\times$ |
+| Answer Relevancy | 0.777 | 0.861 | 0.084 | 0.049 | $\approx 1.7\times$ |
 
 **Conclusion:**
-1. **The judge shift is systematic calibration, not random drift**: The movement between judge models ($\Delta \approx 0.12$–$0.31$) is **2 to 7.5 times larger than the observed run-to-run drift** for the corresponding metrics. Cohere is substantially more lenient across recall, precision, and faithfulness, whereas Gemini Flash Lite is systematically stricter.
-2. **The $k=8$ peak is robust against evaluator drift**: The parameter gains observed at $k=8$ (+0.25 in context recall and +0.16 in faithfulness over $k=5$) are **4 to 6 times the measured run-to-run drift** for those metrics, confirming that the inverted-U operating curve reflects genuine retrieval performance differences rather than evaluator noise.
-
-### 4. Peak Operating Point Empirical Interval ($n=3$ Runs at $k=8$)
-
-To turn "larger than observed drift" into measured empirical intervals at the peak, $k=8$ was evaluated three times under identical conditions (Groq generator, Gemini Flash Lite judge):
-
-| Metric | Run 1 | Run 2 | Run 3 | Mean | Empirical Interval $[x_\min, x_\max]$ | Spread ($\Delta$) |
-|---|---|---|---|---|---|---|
-| **Faithfulness** | 0.767 | 0.590 | 0.640 | 0.666 | $[0.590, 0.767]$ | 0.176 |
-| **Answer Relevancy** | 0.900 | 0.804 | 0.835 | 0.846 | $[0.804, 0.900]$ | 0.096 |
-| **Context Precision** | 0.655 | 0.585 | 0.687 | 0.642 | $[0.585, 0.687]$ | 0.102 |
-| **Context Recall** | 0.833 | 0.611 | 0.625 | 0.690 | $[0.611, 0.833]$ | 0.222 |
-
-All three runs achieved **100% deterministic assertion pass rate** (8/8) and **100% routing accuracy** (26/26). The multi-run intervals quantify the stochastic uncertainty of LLM-as-a-judge scoring on fixed retrieval, providing a grounded baseline for comparing retrieval configurations.
+1. **Judge differences vs. run variance**: The shift between Cohere and Gemini ($\Delta \approx 0.08$–$0.31$) is approximately **1.7 to 2.8 times the standard deviation** observed across repeated runs. While Cohere shows systematically more lenient grading across recall, precision, and faithfulness, having $n=1$ on Cohere means this delta represents a point comparison rather than an isolated distribution.
+2. **Implications for RAG benchmarking**: Most published RAG evaluations run each configuration once and declare an optimal $k$. In reality, single-run differences are easily confounded by generator and judge stochasticity. Rigorous confirmation requires paired query-level testing across matched repetitions.
