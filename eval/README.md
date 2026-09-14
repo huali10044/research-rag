@@ -188,3 +188,16 @@ Comparing $k=5$ evaluated by **Cohere** (`command-r7b-12-2024`) vs. **Gemini** (
 **Conclusion:**
 1. **The judge shift is systematic calibration, not random drift**: The movement between judge models ($\Delta \approx 0.12$–$0.31$) is **2 to 7.5 times larger than the observed run-to-run drift** for the corresponding metrics. Cohere is substantially more lenient across recall, precision, and faithfulness, whereas Gemini Flash Lite is systematically stricter.
 2. **The $k=8$ peak is robust against evaluator drift**: The parameter gains observed at $k=8$ (+0.25 in context recall and +0.16 in faithfulness over $k=5$) are **4 to 6 times the measured run-to-run drift** for those metrics, confirming that the inverted-U operating curve reflects genuine retrieval performance differences rather than evaluator noise.
+
+### 4. Peak Operating Point Empirical Interval ($n=3$ Runs at $k=8$)
+
+To turn "larger than observed drift" into measured empirical intervals at the peak, $k=8$ was evaluated three times under identical conditions (Groq generator, Gemini Flash Lite judge):
+
+| Metric | Run 1 | Run 2 | Run 3 | Mean | Empirical Interval $[x_\min, x_\max]$ | Spread ($\Delta$) |
+|---|---|---|---|---|---|---|
+| **Faithfulness** | 0.767 | 0.590 | 0.640 | 0.666 | $[0.590, 0.767]$ | 0.176 |
+| **Answer Relevancy** | 0.900 | 0.804 | 0.835 | 0.846 | $[0.804, 0.900]$ | 0.096 |
+| **Context Precision** | 0.655 | 0.585 | 0.687 | 0.642 | $[0.585, 0.687]$ | 0.102 |
+| **Context Recall** | 0.833 | 0.611 | 0.625 | 0.690 | $[0.611, 0.833]$ | 0.222 |
+
+All three runs achieved **100% deterministic assertion pass rate** (8/8) and **100% routing accuracy** (26/26). The multi-run intervals quantify the stochastic uncertainty of LLM-as-a-judge scoring on fixed retrieval, providing a grounded baseline for comparing retrieval configurations.
