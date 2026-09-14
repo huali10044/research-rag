@@ -177,10 +177,7 @@ def _call_extraction_llm(prompt: str) -> str | None:
             from google import genai
             client   = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
             response = client.models.generate_content(
-                # gemini-2.0-flash-lite was deprecated by Google; gemini-3.6-flash
-                # is the current replacement (same fix applied to rag.py's
-                # BACKENDS["gemini"] and eval/run_eval.py's judge builder).
-                model="gemini-3.6-flash",
+                model="gemini-3.5-flash-lite",
                 contents=prompt,
             )
             return response.text
@@ -192,7 +189,7 @@ def _call_extraction_llm(prompt: str) -> str | None:
             import anthropic
             client = anthropic.Anthropic()
             msg    = client.messages.create(
-                model="claude-haiku-4-5-20251001",
+                model="claude-3-5-haiku-latest",
                 max_tokens=512,
                 messages=[{"role": "user", "content": prompt}],
             )

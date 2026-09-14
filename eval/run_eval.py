@@ -387,9 +387,7 @@ def build_judge_llm(backend: str, model: str | None, judge_rpm: float | None = N
 
         return LangchainLLMWrapper(
             ChatGoogleGenerativeAI(
-                # gemini-2.0-flash was deprecated by Google; the API's own 404
-                # error names gemini-3.6-flash as the direct replacement.
-                model=model or "gemini-3.6-flash",
+                model=model or "gemini-3.5-flash-lite",
                 google_api_key=os.environ["GEMINI_API_KEY"],
                 temperature=0.0,
                 rate_limiter=rate_limiter,
@@ -408,7 +406,7 @@ def build_judge_llm(backend: str, model: str | None, judge_rpm: float | None = N
         from langchain_anthropic import ChatAnthropic
 
         return LangchainLLMWrapper(
-            ChatAnthropic(model=model or "claude-haiku-4-5-20251001", temperature=0.0,
+            ChatAnthropic(model=model or "claude-3-5-haiku-latest", temperature=0.0,
                           rate_limiter=rate_limiter)
         )
 

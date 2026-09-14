@@ -9,17 +9,17 @@ Query routing:
 
 Supported backends (--backend flag):
   Free tier:
-    gemini      Google Gemini 2.0 Flash     — aistudio.google.com     GEMINI_API_KEY
-    groq        Llama 3 via Groq            — console.groq.com        GROQ_API_KEY
-    mistral     Mistral Small               — console.mistral.ai      MISTRAL_API_KEY
-    openrouter  Mistral-7B free model       — openrouter.ai           OPENROUTER_API_KEY
-    cohere      Command-R                   — dashboard.cohere.com    COHERE_API_KEY
-    ollama      Local Llama (no key)        — ollama.com              (none)
+    gemini      Google Gemini 3.5 Flash Lite — aistudio.google.com     GEMINI_API_KEY
+    groq        GPT-OSS 20B via Groq         — console.groq.com        GROQ_API_KEY
+    mistral     Mistral Small                — console.mistral.ai      MISTRAL_API_KEY
+    openrouter  Mistral-7B free model        — openrouter.ai           OPENROUTER_API_KEY
+    cohere      Command-R7B                  — dashboard.cohere.com    COHERE_API_KEY
+    ollama      Local Llama (no key)         — ollama.com              (none)
   Paid:
-    anthropic   Claude Haiku                — console.anthropic.com   ANTHROPIC_API_KEY
-    openai      GPT-4o-mini                 — platform.openai.com     OPENAI_API_KEY
+    anthropic   Claude 3.5 Haiku             — console.anthropic.com   ANTHROPIC_API_KEY
+    openai      GPT-4o-mini                  — platform.openai.com     OPENAI_API_KEY
   Fallback:
-    local       TinyLlama via transformers  — (no key, slow)
+    local       TinyLlama via transformers   — (no key, slow)
 """
 
 import logging
@@ -52,11 +52,10 @@ AUTO_ORDER = ["gemini", "groq", "mistral", "openrouter", "cohere", "anthropic", 
 BACKENDS = {
     "gemini": {
         "env_key":       "GEMINI_API_KEY",
-        "default_model": "gemini-3.6-flash",
+        "default_model": "gemini-3.5-flash-lite",
         "free_tier":     True,
-        "notes":         "Free tier (15 RPM, 1M tokens/day). gemini-2.0-flash was deprecated by "
-                         "Google; gemini-3.6-flash is the current replacement per the API's own "
-                         "404 message. Get key at aistudio.google.com",
+        "notes":         "Free tier (15 RPM, 500 req/day). gemini-3.5-flash-lite is the active "
+                         "Flash Lite model on Google AI Studio. Get key at aistudio.google.com",
     },
     "groq": {
         "env_key":       "GROQ_API_KEY",
@@ -94,7 +93,7 @@ BACKENDS = {
     },
     "anthropic": {
         "env_key":       "ANTHROPIC_API_KEY",
-        "default_model": "claude-haiku-4-5-20251001",
+        "default_model": "claude-3-5-haiku-latest",
         "free_tier":     False,
         "notes":         "Paid. Get key at console.anthropic.com (new accounts get $5 free credit)",
     },
