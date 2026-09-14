@@ -35,6 +35,29 @@ CHUNK_OVERLAP  = 150
 MIN_CHUNK_LEN  = 150  # discard tiny fragments (e.g. bibliography entries)
 
 
+def _slugify(text: str) -> str:
+    """Stable, readable canonical-ID fragment: lowercase, alnum-and-hyphens only."""
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+
+
+def _pdf_filename_to_work_id_map() -> dict[str, str]:
+    """
+    Map PDF filename -> canonical work_id, for papers that exist both as a raw PDF
+    and as a curated entry in papers_metadata.py (see KI-1 in eval/README.md).
+
+    The work_id is derived from the curated (clean) title, not the filename, so both
+    representations of the same paper share one ID and are treated as one work by
+    corpus stats and by _retrieve_deduped's per-paper cap.
+    """
+    from papers_metadata import PAPERS
+    mapping = {}
+    for paper in PAPERS:
+        pdf_filename = paper.get("pdf_filename")
+        if pdf_filename:
+            mapping[pdf_filename] = _slugify(paper["title"])
+    return mapping
+
+
 def get_embedder() -> SentenceTransformer:
     print(f"Loading embedding model: {EMBED_MODEL}")
     return SentenceTransformer(EMBED_MODEL, device="cpu")
@@ -154,7 +177,10 @@ def _call_extraction_llm(prompt: str) -> str | None:
             from google import genai
             client   = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
             response = client.models.generate_content(
-                model="gemini-2.0-flash-lite",
+                # gemini-2.0-flash-lite was deprecated by Google; gemini-3.6-flash
+                # is the current replacement (same fix applied to rag.py's
+                # BACKENDS["gemini"] and eval/run_eval.py's judge builder).
+                model="gemini-3.6-flash",
                 contents=prompt,
             )
             return response.text
@@ -182,7 +208,10 @@ def _call_extraction_llm(prompt: str) -> str | None:
                 base_url="https://api.groq.com/openai/v1",
             )
             resp = client.chat.completions.create(
-                model="llama-3.1-8b-instant",
+                # llama-3.1-8b-instant is now Groq Enterprise-only; openai/gpt-oss-20b
+                # is the current free-tier default (same fix applied to rag.py's
+                # BACKENDS["groq"]).
+                model="openai/gpt-oss-20b",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=512,
             )
@@ -298,10 +327,19 @@ def extract_pdf_metadata(
 # ── Corpus statistics ─────────────────────────────────────────────────────────
 
 def compute_and_save_corpus_stats(papers: list[dict]):
-    """Deduplicate papers, compute aggregate stats, and write corpus_stats.json."""
+    """
+    Deduplicate papers, compute aggregate stats, and write corpus_stats.json.
+
+    Dedup key is work_id, not title (see KI-1 in eval/README.md). A paper ingested
+    both from a raw PDF and from papers_metadata.py has two different titles — a
+    filename-derived one for the PDF, a clean one for the metadata entry — so an
+    exact-title key never recognized them as the same work. work_id is assigned at
+    ingestion (ingest_pdfs / ingest_metadata_papers) and is shared between the two
+    representations via papers_metadata.py's pdf_filename field.
+    """
     seen: dict[str, dict] = {}
     for p in papers:
-        key = p.get("title", "").lower().strip()
+        key = p.get("work_id") or p.get("title", "").lower().strip()
         if not key:
             continue
         # Prefer manually-curated metadata-source entries over raw PDF extractions
@@ -390,6 +428,7 @@ def ingest_pdfs(
         return 0, []
 
     meta_cache       = load_meta_cache()
+    pdf_to_work_id   = _pdf_filename_to_work_id_map()
     papers_collected = []
     chunk_count      = 0
 
@@ -413,9 +452,15 @@ def ingest_pdfs(
         year    = extracted.get("year")
         venue   = extracted.get("venue") or ""
 
+        # If papers_metadata.py declares this PDF as the same work as one of its
+        # curated entries (via pdf_filename), share that entry's canonical work_id
+        # instead of deriving one from this PDF's own (often messy) title — see KI-1.
+        work_id = pdf_to_work_id.get(pdf_path.name) or _slugify(title)
+
         chunk_meta = {
             "source":  pdf_path.name,
             "title":   title,
+            "work_id": work_id,
             "type":    "pdf",
             "year":    str(year) if year else "",
             "venue":   venue,
@@ -427,6 +472,7 @@ def ingest_pdfs(
 
         papers_collected.append({
             "title":      title,
+            "work_id":    work_id,
             "authors":    authors if isinstance(authors, list) else [],
             "year":       year,
             "venue":      venue,
@@ -450,10 +496,12 @@ def ingest_metadata_papers(collection, embedder) -> tuple[int, list[dict]]:
         text       = _build_paper_text(paper)
         word_count = len(text.split())
         authors    = paper.get("authors", [])
+        work_id    = _slugify(paper["title"])
 
         chunks = chunk_text(text, {
             "source":   "metadata",
             "title":    paper["title"],
+            "work_id":  work_id,
             "year":     str(paper.get("year", "")),
             "venue":    paper.get("venue", ""),
             "authors":  ", ".join(authors),
@@ -466,6 +514,7 @@ def ingest_metadata_papers(collection, embedder) -> tuple[int, list[dict]]:
 
         papers_collected.append({
             "title":      paper["title"],
+            "work_id":    work_id,
             "authors":    authors,
             "year":       paper.get("year"),
             "venue":      paper.get("venue", ""),

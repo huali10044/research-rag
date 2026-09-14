@@ -12,6 +12,7 @@ build/
 # Virtual environment
 venv/
 .venv/
+.venv*/
 env/
 .env/
 
@@ -27,6 +28,9 @@ key.sh
 # Streamlit
 .streamlit/secrets.toml
 
+# Eval
+eval/secrets.toml
+
 # OS
 .DS_Store
 Thumbs.db
@@ -40,7 +44,9 @@ Thumbs.db
 
 # Test artifacts
 data/papers/
+eval/results/
 
 # Internal design docs (not for public release)
 docs/revision-plan.md
 docs/PUBLIC_RELEASE_CLEANUP_PLAN.md
+.streamlit/config.toml

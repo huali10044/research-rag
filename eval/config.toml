@@ -1,0 +1,55 @@
+# Eval configuration — mirrors config.toml in the repo root (used by app.py).
+# Non-secret defaults live here and are safe to commit.
+#
+# API keys go in eval/secrets.toml instead (gitignored). Copy
+# eval/secrets.toml.example to eval/secrets.toml and fill in the keys you have.
+# Any key already exported in your shell takes precedence over this file.
+#
+# All values here are overridable on the command line, e.g.:
+#   python eval/run_eval.py --backend anthropic --judge-backend gemini
+
+[llm]
+# Generator backend used to answer golden-set questions.
+# Options: gemini, anthropic, groq, mistral, openrouter, cohere, ollama, local, auto
+#
+# Using groq here instead of gemini: this Gemini project's free-tier quota for
+# gemini-2.5-flash-lite is capped much lower than Google's published free-tier
+# numbers (seen: 20 requests/day, not ~1000), likely pending phone/account
+# verification. Groq's free tier (openai/gpt-oss-20b) is far more generous
+# and comfortably covers a 26-question run. Note: llama-3.1-8b-instant, the
+# model previously used here, is now Groq Enterprise-only — see the fix in
+# src/rag.py BACKENDS["groq"].
+backend = "groq"
+
+# Model override. Leave empty ("") to use the backend's default model.
+model = ""
+
+[judge]
+# RAGAS judge backend. "auto" prefers a backend different from the generator
+# (see README.md "Judge independence") — set explicitly to pin one.
+# Options: auto, gemini, anthropic, openai, cohere, groq, mistral
+#
+# Pinned to gemini with the "Flash Lite" model specifically. Backend history
+# for this project, in case this also runs dry:
+#   - gemini NON-lite models (e.g. gemini-3.6-flash): 20 requests/DAY on this
+#     account — far too few for a sweep. But the "Flash Lite" models sit in a
+#     separate, much larger quota bucket: 15 RPM / 250K TPM / 500 RPD
+#     (verified in AI Studio's Rate Limit dashboard). 500 RPD covers a
+#     multi-config sweep's ~216 judge calls with headroom.
+#   - cohere trial key: 1,000 calls/MONTH — exhausted across this session's
+#     many runs; a single call now 429s with 14/20 per-minute remaining,
+#     confirming the monthly cap (not the per-minute one) is the wall.
+#   - groq (same backend as generator): shares a 200K tokens/day budget with
+#     generation, so judging exhausts the account's daily quota mid-run.
+#   - mistral: every one of 68 judge calls 429'd across a full run.
+#   - cerebras: requires billing (PayGo) — API returns 402 without it.
+# judge model is set explicitly below because the Flash Lite quota only
+# applies to the Lite model IDs, not the default gemini-3.6-flash.
+backend = "gemini"
+model = "gemini-3.5-flash-lite"
+
+[eval]
+top_k = 5
+track = "all"      # all | rag | exact
+max_workers = 1    # RAGAS parallelism — keep at 1 for free-tier judges
+throttle = 1.0     # seconds between generation calls

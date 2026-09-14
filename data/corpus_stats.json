@@ -1,30 +1,15 @@
 {
-  "generated_at": "2026-05-03T22:22:40.262790",
-  "total_papers": 21,
+  "generated_at": "2026-09-10T13:12:28.195571",
+  "total_papers": 15,
   "year_range": {
     "min": 2003,
     "max": 2015
   },
-  "total_words": 51234,
+  "total_words": 26890,
   "papers": [
     {
-      "title": "2003-An Adaptive Nearest Neighbor Search For A Parts Acquisition Eportal-P693-Alonso",
-      "authors": [],
-      "year": 2003,
-      "venue": "",
-      "word_count": 5347,
-      "source": "pdf"
-    },
-    {
-      "title": "2003-Lessons From The Implementation Of An Adaptive Parts Acquisition Eportal-P169-Alonso",
-      "authors": [],
-      "year": 2003,
-      "venue": "",
-      "word_count": 2239,
-      "source": "pdf"
-    },
-    {
       "title": "An Adaptive Nearest Neighbor Search for a Parts Acquisition ePortal",
+      "work_id": "an-adaptive-nearest-neighbor-search-for-a-parts-acquisition-eportal",
       "authors": [
         "Rafael Alonso",
         "Jeffrey A. Bloom",
@@ -38,6 +23,7 @@
     },
     {
       "title": "Lessons from the Implementation of an Adaptive Parts Acquisition ePortal",
+      "work_id": "lessons-from-the-implementation-of-an-adaptive-parts-acquisition-eportal",
       "authors": [
         "Rafael Alonso",
         "Jeffrey A. Bloom",
@@ -49,23 +35,20 @@
       "source": "metadata"
     },
     {
-      "title": "2005 Combating Cognitive Biases In Information Retrieval",
-      "authors": [],
+      "title": "Combating Cognitive Biases in Information Retrieval",
+      "work_id": "combating-cognitive-biases-in-information-retrieval",
+      "authors": [
+        "Rafael Alonso",
+        "Hua Li"
+      ],
       "year": 2005,
-      "venue": "",
+      "venue": "Proc. International Conference on Intelligence Analysis",
       "word_count": 1256,
-      "source": "pdf"
-    },
-    {
-      "title": "2005-Model-Guided Information Discovery For Intelligence Analysis-P269-Alonso",
-      "authors": [],
-      "year": 2005,
-      "venue": "",
-      "word_count": 1421,
-      "source": "pdf"
+      "source": "metadata"
     },
     {
       "title": "Model-Guided Information Discovery for Intelligence Analysis",
+      "work_id": "model-guided-information-discovery-for-intelligence-analysis",
       "authors": [
         "Rafael Alonso",
         "Hua Li"
@@ -77,6 +60,7 @@
     },
     {
       "title": "Profile-Based Security Against Malicious Mobile Agents",
+      "work_id": "profile-based-security-against-malicious-mobile-agents",
       "authors": [
         "Hua Li",
         "Glena Greene",
@@ -88,15 +72,21 @@
       "source": "metadata"
     },
     {
-      "title": "2009-Potential Ied Threat System (Pits)-05168041",
-      "authors": [],
+      "title": "Potential IED Threat System (PITS)",
+      "work_id": "potential-ied-threat-system-pits",
+      "authors": [
+        "Hua Li",
+        "Diane Bramsen",
+        "Rafael Alonso"
+      ],
       "year": 2009,
-      "venue": "",
+      "venue": "2009 IEEE Conference on Technologies for Homeland Security",
       "word_count": 5364,
-      "source": "pdf"
+      "source": "metadata"
     },
     {
       "title": "Spatial Event Prediction by Combining Value Function Approximation and Case-Based Reasoning",
+      "work_id": "spatial-event-prediction-by-combining-value-function-approximation-and-case-based-reasoning",
       "authors": [
         "Hua Li",
         "H\u00e9ctor Mu\u00f1oz-Avila",
@@ -110,39 +100,34 @@
       "source": "metadata"
     },
     {
-      "title": "2010-Incremental User Modeling With Heterogeneous User Behaviors-30628",
-      "authors": [],
+      "title": "Incremental User Modeling with Heterogeneous User Behaviors",
+      "work_id": "incremental-user-modeling-with-heterogeneous-user-behaviors",
+      "authors": [
+        "Rafael Alonso",
+        "Peter Bramsen",
+        "Hua Li"
+      ],
       "year": 2010,
-      "venue": "",
+      "venue": "KMIS 2010",
       "word_count": 4201,
-      "source": "pdf"
+      "source": "metadata"
     },
     {
-      "title": "2012-Discovering Virtual Interest Groups Across Chat Rooms-41315",
-      "authors": [],
+      "title": "Discovering Virtual Interest Groups across Chat Rooms",
+      "work_id": "discovering-virtual-interest-groups-across-chat-rooms",
+      "authors": [
+        "Hua Li",
+        "Jeff Lau",
+        "Rafael Alonso"
+      ],
       "year": 2012,
-      "venue": "",
+      "venue": "KMIS 2012",
       "word_count": 3644,
-      "source": "pdf"
-    },
-    {
-      "title": "2012-Managing Analysis Context-P33-Li",
-      "authors": [],
-      "year": 2012,
-      "venue": "",
-      "word_count": 5352,
-      "source": "pdf"
-    },
-    {
-      "title": "2012-Opaque Attribute Alignment-06313650",
-      "authors": [],
-      "year": 2012,
-      "venue": "",
-      "word_count": 4328,
-      "source": "pdf"
+      "source": "metadata"
     },
     {
       "title": "Managing Analysis Context",
+      "work_id": "managing-analysis-context",
       "authors": [
         "Hua Li",
         "Rafael Alonso"
@@ -154,6 +139,7 @@
     },
     {
       "title": "Opaque Attribute Alignment",
+      "work_id": "opaque-attribute-alignment",
       "authors": [
         "Jennifer Sleeman",
         "Rafael Alonso",
@@ -167,23 +153,23 @@
       "source": "metadata"
     },
     {
-      "title": "2013-Discovery Of Player Strategies In A Serious Game-7636-32518-1-Pb",
-      "authors": [],
+      "title": "Discovery of Player Strategies in a Serious Game",
+      "work_id": "discovery-of-player-strategies-in-a-serious-game",
+      "authors": [
+        "Hua Li",
+        "Hector Munoz-Avila",
+        "Liana Ke",
+        "Chris Symborski",
+        "Rafael Alonso"
+      ],
       "year": 2013,
-      "venue": "",
+      "venue": "First AAAI Conference on Human Computation and Crowdsourcing",
       "word_count": 4297,
-      "source": "pdf"
-    },
-    {
-      "title": "2014-Adaptive Interest Modeling Improves Content Services At The Network Edge-06956895",
-      "authors": [],
-      "year": 2014,
-      "venue": "",
-      "word_count": 5657,
-      "source": "pdf"
+      "source": "metadata"
     },
     {
       "title": "Adaptive Interest Modeling Improves Content Services at the Network Edge",
+      "work_id": "adaptive-interest-modeling-improves-content-services-at-the-network-edge",
       "authors": [
         "Hua Li",
         "Ralph Costantini",
@@ -201,20 +187,30 @@
       "source": "metadata"
     },
     {
-      "title": "Pro-Rama Cs",
-      "authors": [],
+      "title": "User Modeling for Contextual Suggestion",
+      "work_id": "user-modeling-for-contextual-suggestion",
+      "authors": [
+        "Hua Li",
+        "Rafael Alonso"
+      ],
       "year": 2014,
-      "venue": "",
+      "venue": "21st Text REtrieval Conference (TREC 2014)",
       "word_count": 4838,
-      "source": "pdf"
+      "source": "metadata"
     },
     {
-      "title": "2015-User Modeling Of Skills And Expertise From Resumes-Kmis",
-      "authors": [],
+      "title": "User Modeling of Skills and Expertise from Resumes",
+      "work_id": "user-modeling-of-skills-and-expertise-from-resumes",
+      "authors": [
+        "Hua Li",
+        "Daniel J. T. Powell",
+        "Mark Clark",
+        "Tifani O'Brien"
+      ],
       "year": 2015,
-      "venue": "",
+      "venue": "KMIS 2015",
       "word_count": 2361,
-      "source": "pdf"
+      "source": "metadata"
     }
   ]
 }

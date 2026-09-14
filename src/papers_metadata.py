@@ -9,6 +9,13 @@ Add your full paper list here. Each entry is used to:
 If you have PDFs, drop them in /data/papers/ and they'll be ingested automatically.
 The metadata entries complement PDFs by providing clean abstracts and keywords
 even when the full PDF text is noisy (scanned pages, headers/footers, etc.).
+
+pdf_filename (optional): if this paper is ALSO present as a raw PDF in
+PAPERS_DIR, set this to that PDF's exact filename. ingest.py uses it to
+recognize both representations as the same work and assign them a shared
+canonical work_id, instead of indexing them as two separate papers with
+different titles (a filename-derived one for the PDF, a clean one here).
+See KI-1 in eval/README.md for why this matters.
 """
 
 PAPERS = [
@@ -21,6 +28,10 @@ PAPERS = [
         ],
         "year": 2014,
         "venue": "IEEE Military Communications Conference (MILCOM 2014)",
+        # This paper is also ingested from a raw PDF (see PAPERS_DIR). pdf_filename
+        # lets ingest.py recognize both representations as the same work and merge
+        # them under one canonical work_id — see KI-1 in eval/README.md.
+        "pdf_filename": "2014-Adaptive Interest Modeling Improves Content Services at the Network Edge-06956895.pdf",
         "doi": "10.1109/MILCOM.2014.175",
         "url": "http://dx.doi.org/10.1109/MILCOM.2014.175",
         "abstract": (
@@ -46,6 +57,7 @@ PAPERS = [
         "authors": ["Jennifer Sleeman", "Rafael Alonso", "Hua Li", "Art Pope", "Antonio Badia"],
         "year": 2012,
         "venue": "IEEE 28th International Conference on Data Engineering Workshops (ICDEW 2012)",
+        "pdf_filename": "2012-Opaque Attribute Alignment-06313650.pdf",
         "doi": "10.1109/ICDEW.2012.62",
         "url": "http://dx.doi.org/10.1109/ICDEW.2012.62",
         "abstract": (
@@ -114,6 +126,7 @@ PAPERS = [
         "authors": ["Rafael Alonso", "Jeffrey A. Bloom", "Hua Li", "Chumki Basu"],
         "year": 2003,
         "venue": "9th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD 2003)",
+        "pdf_filename": "2003-An adaptive nearest neighbor search for a parts acquisition ePortal-p693-alonso.pdf",
         "doi": "10.1145/956750.956842",
         "url": "http://doi.acm.org/10.1145/956750.956842",
         "abstract": (
@@ -137,6 +150,7 @@ PAPERS = [
         "authors": ["Rafael Alonso", "Jeffrey A. Bloom", "Hua Li"],
         "year": 2003,
         "venue": "12th ACM International Conference on Information and Knowledge Management (CIKM 2003)",
+        "pdf_filename": "2003-Lessons from the implementation of an adaptive parts acquisition ePortal-p169-alonso.pdf",
         "doi": "10.1145/956863.956896",
         "url": "http://doi.acm.org/10.1145/956863.956896",
         "abstract": (
@@ -159,6 +173,7 @@ PAPERS = [
         "authors": ["Rafael Alonso", "Hua Li"],
         "year": 2005,
         "venue": "14th ACM International Conference on Information and Knowledge Management (CIKM 2005)",
+        "pdf_filename": "2005-Model-guided information discovery for intelligence analysis-p269-alonso.pdf",
         "doi": "10.1145/1099554.1099621",
         "url": "http://doi.acm.org/10.1145/1099554.1099621",
         "abstract": (
@@ -182,6 +197,7 @@ PAPERS = [
         "authors": ["Hua Li", "Rafael Alonso"],
         "year": 2012,
         "venue": "12th International Workshop on Web Information and Data Management (WIDM 2012)",
+        "pdf_filename": "2012-Managing analysis context-p33-li.pdf",
         "doi": "10.1145/2389936.2389945",
         "url": "http://doi.acm.org/10.1145/2389936.2389945",
         "abstract": (
@@ -199,5 +215,63 @@ PAPERS = [
             "sessions. Directly relevant to conversational AI and session-aware RAG systems "
             "that maintain dialogue context for improved retrieval."
         ),
+    },
+    # ── The entries below fill in authors/venue for existing PDF-only corpus
+    # entries, sourced from the author's Google Scholar profile (confirmed by
+    # the user, not inferred). No abstract/summary is included where the PDF's
+    # own text is the actual source of truth for that content — these entries
+    # exist to correct authors/venue metadata, not to duplicate/replace the PDF.
+    {
+        "title": "Discovery of Player Strategies in a Serious Game",
+        "authors": ["Hua Li", "Hector Munoz-Avila", "Liana Ke", "Chris Symborski", "Rafael Alonso"],
+        "year": 2013,
+        "venue": "First AAAI Conference on Human Computation and Crowdsourcing",
+        "pdf_filename": "2013-Discovery of Player Strategies in a Serious Game-7636-32518-1-PB.pdf",
+    },
+    {
+        "title": "User Modeling of Skills and Expertise from Resumes",
+        "authors": ["Hua Li", "Daniel J. T. Powell", "Mark Clark", "Tifani O'Brien"],
+        "year": 2015,
+        # Venue given verbatim as "KMIS 2015" on Google Scholar; not expanding the
+        # acronym since the full conference name wasn't independently confirmed.
+        "venue": "KMIS 2015",
+        "pdf_filename": "2015-User Modeling of Skills and Expertise from Resumes-KMIS.pdf",
+    },
+    {
+        "title": "Discovering Virtual Interest Groups across Chat Rooms",
+        "authors": ["Hua Li", "Jeff Lau", "Rafael Alonso"],
+        "year": 2012,
+        "venue": "KMIS 2012",
+        "pdf_filename": "2012-Discovering Virtual Interest Groups across Chat Rooms-41315.pdf",
+    },
+    {
+        "title": "Incremental User Modeling with Heterogeneous User Behaviors",
+        "authors": ["Rafael Alonso", "Peter Bramsen", "Hua Li"],
+        "year": 2010,
+        "venue": "KMIS 2010",
+        "pdf_filename": "2010-INCREMENTAL USER MODELING WITH HETEROGENEOUS USER BEHAVIORS-30628.pdf",
+    },
+    {
+        "title": "Potential IED Threat System (PITS)",
+        "authors": ["Hua Li", "Diane Bramsen", "Rafael Alonso"],
+        "year": 2009,
+        "venue": "2009 IEEE Conference on Technologies for Homeland Security",
+        "pdf_filename": "2009-Potential IED Threat System (PITS)-05168041.pdf",
+    },
+    {
+        # PDF filename in the corpus is "pro-RAMA_cs.pdf" — confirmed by the user to be
+        # this same paper under an internal project codename (RAMA), not a separate work.
+        "title": "User Modeling for Contextual Suggestion",
+        "authors": ["Hua Li", "Rafael Alonso"],
+        "year": 2014,
+        "venue": "21st Text REtrieval Conference (TREC 2014)",
+        "pdf_filename": "pro-RAMA_cs.pdf",
+    },
+    {
+        "title": "Combating Cognitive Biases in Information Retrieval",
+        "authors": ["Rafael Alonso", "Hua Li"],
+        "year": 2005,
+        "venue": "Proc. International Conference on Intelligence Analysis",
+        "pdf_filename": "2005 Combating Cognitive Biases in Information Retrieval.pdf",
     },
 ]
