@@ -65,7 +65,7 @@ with st.sidebar:
     st.caption(backend_cfg["notes"])
     st.divider()
 
-    top_k = st.slider("Sources to retrieve", min_value=2, max_value=8, value=4)
+    top_k = st.slider("Sources to retrieve", min_value=2, max_value=16, value=4)
     show_sources = st.toggle("Show source details", value=True)
 
     st.divider()
