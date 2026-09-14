@@ -194,3 +194,26 @@ Comparing $k=5$ evaluated by **Cohere** (`command-r7b-12-2024`, $n=1$) vs. **Gem
 **Conclusion:**
 1. **Judge differences vs. run variance**: The shift between Cohere and Gemini ($\Delta \approx 0.08$–$0.31$) is approximately **1.7 to 2.8 times the standard deviation** observed across repeated runs. While Cohere shows systematically more lenient grading across recall, precision, and faithfulness, having $n=1$ on Cohere means this delta represents a point comparison rather than an isolated distribution.
 2. **Implications for RAG benchmarking**: Most published RAG evaluations run each configuration once and declare an optimal $k$. In reality, single-run differences are easily confounded by generator and judge stochasticity. Rigorous confirmation requires paired query-level testing across matched repetitions.
+
+### 4. Demonstrating Paired Query-Level Testing ($k=8$ Run 1 vs. $k=12$)
+
+To show how confirmatory testing is structured without discarding query-level pairing, we evaluate matched query pairs between `top_k=8` (Run 1) and `top_k=12` from the existing records on disk. 
+
+Because both configurations were tested on the identical 18 golden-set retrieval queries, each question serves as its own control, removing query-difficulty variance:
+
+| Metric | Matched Pairs ($N$) | Mean Difference ($\bar{D} = k_8 - k_{12}$) | Non-Zero Diffs | Ties ($D_i = 0$) | Paired $t$-test ($p$-value) | Wilcoxon Signed-Rank ($p$-value) |
+|---|---|---|---|---|---|---|
+| **Faithfulness** | 9 | +0.088 | 7 | 2 | $t = 1.11$, $p = 0.300$ | $W = 9.0$, $p = 0.469$ |
+| **Answer Relevancy** | 9 | -0.005 | 8 | 1 | $t = -0.23$, $p = 0.826$ | $W = 16.0$, $p = 0.844$ |
+| **Context Precision** | 8 | +0.132 | 3 | 5 | $t = 1.06$, $p = 0.324$ | $W = 0.0$, $p = 0.250$ |
+| **Context Recall** | 9 | +0.111 | 1 | 8 | $t = 1.00$, $p = 0.347$ | $W = 0.0$, $p = 1.000$ |
+
+*(Note: Of the 18 retrieval queries, several complex content queries had judge parse timeouts resulting in missing metric values in one of the runs, yielding 8–9 fully matched pairs per metric).*
+
+**Methodological Takeaways:**
+1. **No statistically significant difference ($p > 0.25$ on all metrics)**: Even on the single run where $k=8$ drew its highest scores, paired non-parametric Wilcoxon tests show $p$-values well above standard significance thresholds ($\alpha = 0.05$). On context recall, 8 of the 9 evaluated pairs tied exactly ($D_i = 0$).
+2. **Why single-run pairing is still contaminated**: Comparing single runs per configuration means generator phrasing variance and judge parse instability still contaminate the pairing. 
+3. **The roadmap for formal confirmation**: To formally prove an operating point optimum:
+   - Average per-query scores over matched repeated runs ($M \ge 3$) to filter stochastic generator/judge jitter before pairing.
+   - Use a larger evaluation set ($N \ge 40$ queries) to provide adequate statistical power for non-parametric signed-rank tests.
+   - Apply multiplicity corrections (e.g., Holm-Bonferroni) across the comparative hypotheses ($k=8$ vs. $k=3, 5, 12$).
