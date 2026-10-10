@@ -2,6 +2,12 @@
 
 A retrieval-augmented generation (RAG) system that lets you ask questions about your own published research. Built as a portfolio project demonstrating modern AI engineering skills.
 
+## Write-up
+
+**[I found the optimal top-k for my RAG system. Then I ran it again.](https://dev.to/hualiphd/i-found-the-optimal-top-k-for-my-rag-system-then-i-ran-it-again-3oi3)**
+
+What the evaluation harness in this repo found: a clean top-k optimum at k=8 that did not survive replication. Part of the peak was run-to-run noise, and part came from a run that was scored on only half the questions. The article also covers a judge model that moved the metrics more than the parameter under test, and a corpus duplication bug the harness caught in its own index.
+
 ## What it does
 
 - Ingests your research papers (PDFs or structured metadata)
