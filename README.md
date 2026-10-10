@@ -14,7 +14,7 @@ What the evaluation harness in this repo found: a clean top-k optimum at k=8 tha
 - Chunks and embeds them using `sentence-transformers`
 - Stores vectors in ChromaDB (local, no infra needed)
 - Retrieves semantically relevant chunks for any query
-- Generates grounded answers using Claude or GPT-4o-mini
+- Generates grounded answers through any of nine LLM backends, with automatic fallback
 
 ## Stack
 
@@ -22,7 +22,7 @@ What the evaluation harness in this repo found: a clean top-k optimum at k=8 tha
 |---|---|---|
 | Embedding | `sentence-transformers` (`all-MiniLM-L6-v2`) | Free, fast, high quality |
 | Vector store | ChromaDB | Zero infra — runs in-process |
-| Chunking | LangChain `RecursiveCharacterTextSplitter` | Overlap-aware, preserves context |
+| Chunking | Custom splitter (800 characters, 150 overlap, breaks at paragraph and sentence boundaries) | Overlap-aware, preserves context |
 | LLM Generator | Multi-backend (Groq, Gemini, Anthropic Claude, OpenAI, Mistral, Cohere, local) | Resilient with automatic provider fallback |
 | Evaluation | RAGAS + deterministic substring assertions | Two-track quality and routing verification |
 | UI | Streamlit | Fast to build, easy to demo |
@@ -146,7 +146,7 @@ Embedding & Search
 ### Design decisions worth explaining in interviews
 
 1. **Query-type routing avoids RAG anti-patterns** — Asking "how many papers did I publish?" or "list all papers from 2012" in standard vector RAG frequently fails because chunks can only represent localized passages. Directing corpus-level aggregation queries to deterministic data structures guarantees 100% accuracy and eliminates unnecessary vector search and LLM calls.
-2. **Chunk size 800 / overlap 150** — Tested on academic text; larger chunks preserve cohesive argument structure within sections, while overlap prevents splitting mid-equation or mid-citation.
+2. **Chunk size 800 characters / overlap 150** — Tested on academic text; larger chunks preserve cohesive argument structure within sections, while overlap prevents splitting mid-equation or mid-citation.
 3. **Canonical Work Identification (Deduplication)** — Real-world academic corpora frequently duplicate works across pre-prints, camera-ready PDFs, and metadata entries. Ingesting both would artificially inflate corpus statistics and pollute vector search with duplicate passages. Assigning a canonical `work_id` groups representations of the same work together.
 4. **Per-paper retrieval caps** — Prevents long or keyword-dense papers from monopolizing the retrieved top-k context, ensuring topic diversity across Dr. Li's corpus.
 5. **Provider resilience with automatic fallback** — Generation falls back gracefully across Groq, Gemini, Anthropic, OpenAI, Mistral, Cohere, and local pipelines if any upstream provider encounters rate limits or outages.
