@@ -108,8 +108,68 @@ python eval/run_eval.py --backend gemini --judge-backend anthropic
 ```
 
 Report which configuration produced any number you quote — the config block
-in each `eval/results/*.json` run records the generator and judge backend
-actually used.
+in each `eval/results/*.json` run records the generator and judge backend and
+model actually used.
+
+## Provenance, missing scores and replay
+
+A RAGAS score is only comparable to another one if both were produced by the
+same judge, the same parser and the same questions. Each run therefore records:
+
+| Where | What |
+|---|---|
+| `config` | generator backend and model, judge backend and model, judge temperature, `mode` (`generate` or `replay`) |
+| `provenance` | RAGAS and langchain-core versions, Python version, harness commit, golden-set hash, question ids, start time |
+| `records` | every answer **and its retrieved contexts** |
+| `rag_track.rows[].status` | per question and metric: `ok`, or the reason the score is missing |
+| `rag_track.coverage` | per metric: questions scored, questions expected, and the missing ids with reasons |
+| `eval-<stamp>.judge.jsonl` | one line per judge call: question, metric, prompt name, prompt hash, raw output, error |
+
+The RAGAS version is the parser version: RAGAS parses the judge's output, so a
+RAGAS upgrade can change which outputs parse. Raw judge outputs are kept so a
+parser change can be checked against the same judge responses. Pass
+`--save-judge-prompts` to store the full prompts too.
+
+**Missing scores.** RAGAS returns NaN for any failure. The harness separates them:
+
+| Status | Meaning |
+|---|---|
+| `rate_limit` | the judge API refused the call (quota or rate limit) |
+| `timeout` | the judge call timed out |
+| `parse_failure` | the judge answered but the RAGAS parser could not read it |
+| `judge_error` | the judge call failed for another reason |
+| `undefined` | the metric returned no value and raised no error |
+| `generation_error` | the generator failed, so there was nothing to score |
+| `no_context` | retrieval returned no chunks |
+| `unrecorded` | the result file predates reason tracking |
+
+**Coverage.** A mean over 9 of 18 questions is not comparable to a mean over
+all 18. The report writes such a cell as `0.833 (9/18)`, lists why the rest are
+missing, and adds a same-question table that restricts every run to the
+questions all runs scored. `--strict-coverage` goes further: it withholds any
+partial mean and stops the sweep after the first incomplete run (exit code 2),
+which also stops a sweep from burning quota once the judge starts refusing calls.
+
+**Separating judge variance from generator variance.** A normal repeat
+regenerates the answers and re-judges them, so its spread mixes both sources.
+
+```bash
+# Judge variance only: one set of saved answers, judged three times
+python eval/run_eval.py --top-k 8                      # writes eval-<stamp>.json
+python eval/run_eval.py --replay eval/results/eval-<stamp>.json --repeats 3
+
+# Generator + judge variance: three fresh generations under the same judge
+python eval/run_eval.py --top-k 8 --repeats 3
+```
+
+Replay needs the retrieved contexts, so it only works on result files written
+by this version of the harness. The September sweep files were saved without
+them and cannot be replayed.
+
+**Tests.** `pip install pytest && pytest eval/tests` runs without API keys. The
+tests use a stand-in judge to check failure reasons, raw-output capture and
+replay against the pinned RAGAS version, and use the committed September sweep
+to check the coverage and same-question arithmetic.
 
 ## Known issues (resolved)
 

@@ -29,6 +29,24 @@ Usage
     # Use a different generator or judge
     python eval/run_eval.py --backend gemini --judge-backend anthropic
 
+    # Three full runs of one configuration (each regenerates and re-judges)
+    python eval/run_eval.py --top-k 8 --repeats 3
+
+    # Re-judge saved answers three times, regenerating nothing: judge variance only
+    python eval/run_eval.py --replay eval/results/eval-<stamp>.json --repeats 3
+
+    # Refuse to report a mean over a partial question set, and stop the sweep
+    python eval/run_eval.py --sweep-top-k 3 5 8 12 --strict-coverage
+
+What each run records
+---------------------
+Every eval-<stamp>.json run stores the answers and the retrieved contexts, the
+generator and judge model, the judge temperature, the RAGAS version (which is
+the version of the judge-output parser), the harness commit and a hash of the
+golden set. Each score carries a status, so a missing score says whether the
+judge API refused the call, the parser could not read the output, or the
+metric was undefined. Raw judge outputs go to eval-<stamp>.judge.jsonl.
+
 Configuration
 -------------
 Defaults come from eval/config.toml (generator/judge backend + model, top_k,
@@ -57,10 +75,14 @@ configs.
 from __future__ import annotations
 
 import argparse
+import hashlib
+import importlib.metadata
 import json
 import logging
 import os
+import platform
 import statistics
+import subprocess
 import sys
 import time
 import tomllib
@@ -283,6 +305,10 @@ def score_routing(records: list[dict]) -> dict[str, Any]:
 
 JUDGE_ORDER = ["gemini", "anthropic", "openai", "cohere", "groq", "mistral"]
 
+# Every judge is built with this temperature. It is written into each result
+# file so a score can be traced back to the exact judge settings.
+JUDGE_TEMPERATURE = 0.0
+
 
 def _backend_available(name: str) -> bool:
     cfg = rag.BACKENDS[name]
@@ -389,7 +415,7 @@ def build_judge_llm(backend: str, model: str | None, judge_rpm: float | None = N
             ChatGoogleGenerativeAI(
                 model=model or "gemini-3.5-flash-lite",
                 google_api_key=os.environ["GEMINI_API_KEY"],
-                temperature=0.0,
+                temperature=JUDGE_TEMPERATURE,
                 rate_limiter=rate_limiter,
             )
         )
@@ -398,7 +424,7 @@ def build_judge_llm(backend: str, model: str | None, judge_rpm: float | None = N
         from langchain_openai import ChatOpenAI
 
         return LangchainLLMWrapper(
-            ChatOpenAI(model=model or "gpt-4o-mini", temperature=0.0,
+            ChatOpenAI(model=model or "gpt-4o-mini", temperature=JUDGE_TEMPERATURE,
                        rate_limiter=rate_limiter)
         )
 
@@ -406,7 +432,7 @@ def build_judge_llm(backend: str, model: str | None, judge_rpm: float | None = N
         from langchain_anthropic import ChatAnthropic
 
         return LangchainLLMWrapper(
-            ChatAnthropic(model=model or "claude-3-5-haiku-latest", temperature=0.0,
+            ChatAnthropic(model=model or "claude-3-5-haiku-latest", temperature=JUDGE_TEMPERATURE,
                           rate_limiter=rate_limiter)
         )
 
@@ -420,7 +446,7 @@ def build_judge_llm(backend: str, model: str | None, judge_rpm: float | None = N
                 # (20 req/min, 1000 calls/month — see docs.cohere.com/v2/docs/rate-limits).
                 model=model or "command-r7b-12-2024",
                 cohere_api_key=os.environ["COHERE_API_KEY"],
-                temperature=0.0,
+                temperature=JUDGE_TEMPERATURE,
                 rate_limiter=rate_limiter,
             )
         )
@@ -436,7 +462,7 @@ def build_judge_llm(backend: str, model: str | None, judge_rpm: float | None = N
                 model=model or "openai/gpt-oss-20b",
                 api_key=os.environ["GROQ_API_KEY"],
                 base_url="https://api.groq.com/openai/v1",
-                temperature=0.0,
+                temperature=JUDGE_TEMPERATURE,
                 rate_limiter=rate_limiter,
             )
         )
@@ -449,7 +475,7 @@ def build_judge_llm(backend: str, model: str | None, judge_rpm: float | None = N
                 model=model or "mistral-small-latest",
                 api_key=os.environ["MISTRAL_API_KEY"],
                 base_url="https://api.mistral.ai/v1",
-                temperature=0.0,
+                temperature=JUDGE_TEMPERATURE,
                 rate_limiter=rate_limiter,
             )
         )
@@ -486,6 +512,185 @@ def build_embeddings():
     return LangchainEmbeddingsWrapper(SentenceTransformerEmbeddings(rag.EMBED_MODEL))
 
 
+# ── Judge tracing ─────────────────────────────────────────────────────────────
+# RAGAS returns one number per (question, metric), and NaN for anything that
+# went wrong. A NaN can mean the judge API refused the call, the judge answered
+# but the parser could not read it, or the metric had nothing to score. Those
+# are three different problems, and pooling them makes a mean over the
+# surviving questions look like a mean over all of them.
+#
+# The trace below listens to RAGAS's own callback tree (evaluation → row →
+# metric → prompt → LLM call) and records, for every judge call, which question
+# and metric it belonged to, what the judge returned, and why a metric failed.
+
+MISSING_REASONS = {
+    "rate_limit":       "judge API refused the call (quota or rate limit)",
+    "timeout":          "judge call timed out",
+    "parse_failure":    "judge answered but the RAGAS parser could not read it",
+    "judge_error":      "judge call failed for another reason",
+    "undefined":        "metric returned no value and raised no error",
+    "generation_error": "the generator failed, so there was nothing to score",
+    "no_context":       "retrieval returned no chunks",
+    "unrecorded":       "result file predates reason tracking",
+}
+
+
+def classify_judge_error(type_name: str, message: str) -> str:
+    """Map an exception raised inside a RAGAS metric to a MISSING_REASONS key."""
+    text = f"{type_name} {message}".lower()
+    if "outputparser" in text or "failed to parse" in text:
+        return "parse_failure"
+    if any(s in text for s in ("429", "rate limit", "ratelimit", "quota",
+                               "resource exhausted", "resourceexhausted",
+                               "too many requests")):
+        return "rate_limit"
+    if "timeout" in text or "timed out" in text:
+        return "timeout"
+    return "judge_error"
+
+
+def build_judge_trace(question_ids: list[str], keep_prompts: bool = False):
+    """
+    Return a LangChain callback handler that attributes every judge call to a
+    (question, metric) pair. Built lazily so --track exact needs no langchain.
+    """
+    from langchain_core.callbacks import BaseCallbackHandler
+
+    class JudgeTrace(BaseCallbackHandler):
+        raise_error = False
+
+        def __init__(self) -> None:
+            self.chains: dict[Any, tuple] = {}   # run_id → (name, parent, type, row)
+            self.calls: dict[Any, dict] = {}     # llm run_id → call record
+            self.metric_errors: dict[tuple, dict] = {}  # (row, metric) → error
+
+        def _locate(self, run_id) -> tuple[int | None, str | None, str | None]:
+            """Walk up the run tree to find the row, metric and prompt names."""
+            row = metric = prompt = None
+            for _ in range(50):
+                if run_id is None or run_id not in self.chains:
+                    break
+                name, parent, ctype, row_index = self.chains[run_id]
+                if ctype == "ragas_prompt" and prompt is None:
+                    prompt = name
+                elif ctype == "metric":
+                    metric = name
+                elif ctype == "row":
+                    row = row_index
+                run_id = parent
+            return row, metric, prompt
+
+        def on_chain_start(self, serialized, inputs, *, run_id,
+                           parent_run_id=None, metadata=None, **kwargs):
+            metadata = metadata or {}
+            ctype = metadata.get("type")
+            ctype = getattr(ctype, "value", ctype)
+            name = (serialized or {}).get("name") or kwargs.get("name")
+            self.chains[run_id] = (name, parent_run_id, ctype, metadata.get("row_index"))
+
+        def on_chain_error(self, error, *, run_id, **kwargs):
+            entry = self.chains.get(run_id)
+            if entry and entry[2] == "metric":
+                row, metric, _ = self._locate(run_id)
+                self.metric_errors[(row, metric)] = {
+                    "type": type(error).__name__,
+                    "message": str(error)[:500],
+                }
+
+        def _start_call(self, run_id, parent_run_id, prompt_text: str) -> None:
+            row, metric, prompt = self._locate(parent_run_id)
+            known = row is not None and 0 <= row < len(question_ids)
+            call = {
+                "question_id": question_ids[row] if known else None,
+                "metric": metric,
+                "prompt": prompt,
+                "prompt_sha256": hashlib.sha256(prompt_text.encode()).hexdigest(),
+                "prompt_chars": len(prompt_text),
+                "output": None,
+                "error": None,
+            }
+            if keep_prompts:
+                call["prompt_text"] = prompt_text
+            self.calls[run_id] = call
+
+        def on_chat_model_start(self, serialized, messages, *, run_id,
+                                parent_run_id=None, **kwargs):
+            text = "\n".join(str(m.content) for batch in messages for m in batch)
+            self._start_call(run_id, parent_run_id, text)
+
+        def on_llm_start(self, serialized, prompts, *, run_id,
+                         parent_run_id=None, **kwargs):
+            self._start_call(run_id, parent_run_id, "\n".join(prompts))
+
+        def on_llm_end(self, response, *, run_id, **kwargs):
+            call = self.calls.get(run_id)
+            if call is None:
+                return
+            texts = [g.text for gens in response.generations for g in gens]
+            call["output"] = texts[0] if len(texts) == 1 else texts
+
+        def on_llm_error(self, error, *, run_id, **kwargs):
+            call = self.calls.get(run_id)
+            if call is not None:
+                call["error"] = f"{type(error).__name__}: {str(error)[:500]}"
+
+    return JudgeTrace()
+
+
+# ── Coverage ──────────────────────────────────────────────────────────────────
+# A mean is only comparable to another mean if both cover the same questions.
+# These helpers work on saved result dicts, so they also describe result files
+# written before reason tracking existed (reasons show as "unrecorded").
+
+def metric_coverage(rag_track: dict) -> dict[str, dict]:
+    """Per metric: how many questions were scored, of how many, and why not."""
+    rows = rag_track.get("rows", [])
+    skipped = rag_track.get("skipped", [])
+    skipped_reasons = rag_track.get("skipped_reasons", {})
+    total = len(rows) + len(skipped)
+
+    coverage: dict[str, dict] = {}
+    for metric in rag_track.get("scores", {}):
+        missing: dict[str, str] = {}
+        for row in rows:
+            if row.get(metric) is None:
+                missing[row["id"]] = row.get("status", {}).get(metric, "unrecorded")
+        for qid in skipped:
+            missing[qid] = skipped_reasons.get(qid, "unrecorded")
+        coverage[metric] = {
+            "scored": total - len(missing),
+            "total": total,
+            "missing": missing,
+        }
+    return coverage
+
+
+def is_complete(rag_track: dict) -> bool:
+    return all(c["scored"] == c["total"] for c in metric_coverage(rag_track).values())
+
+
+def matched_question_means(runs: list[dict], metric: str) -> tuple[list[str], list[float | None]]:
+    """
+    Restrict every run to the questions that *all* runs scored on this metric,
+    and return (those question ids, one mean per run). This is the like-for-like
+    comparison: without it, a run that lost its harder questions looks better.
+    """
+    scored_sets = []
+    for run in runs:
+        rows = run["rag_track"].get("rows", [])
+        scored_sets.append({r["id"] for r in rows if r.get(metric) is not None})
+    if not scored_sets:
+        return [], []
+    common = set.intersection(*scored_sets)
+
+    order = [r["id"] for r in runs[0]["rag_track"].get("rows", []) if r["id"] in common]
+    means: list[float | None] = []
+    for run in runs:
+        vals = [r[metric] for r in run["rag_track"].get("rows", []) if r["id"] in common]
+        means.append(round(statistics.mean(vals), 4) if vals else None)
+    return order, means
+
+
 # ── Track 2: RAGAS ────────────────────────────────────────────────────────────
 
 def score_rag_track(
@@ -494,6 +699,7 @@ def score_rag_track(
     judge_model: str | None,
     max_workers: int,
     judge_rpm: float | None = None,
+    keep_prompts: bool = False,
 ) -> dict[str, Any]:
     from ragas import EvaluationDataset, SingleTurnSample, evaluate
     from ragas.metrics import (
@@ -505,11 +711,18 @@ def score_rag_track(
     from ragas.run_config import RunConfig
 
     scorable = [r for r in records if r["contexts"] and not r["error"]]
-    skipped = [r["id"] for r in records if not r["contexts"] or r["error"]]
+    skipped_reasons = {
+        r["id"]: ("generation_error" if r["error"] else "no_context")
+        for r in records
+        if not r["contexts"] or r["error"]
+    }
+    skipped = list(skipped_reasons)
     if skipped:
         print(f"  Skipping {len(skipped)} sample(s) with no context or an error: {skipped}")
     if not scorable:
-        return {"n": 0, "skipped": skipped, "scores": {}, "rows": []}
+        return {"n": 0, "skipped": skipped, "skipped_reasons": skipped_reasons,
+                "scores": {}, "coverage": {}, "complete": not skipped,
+                "rows": [], "_judge_calls": []}
 
     dataset = EvaluationDataset(
         samples=[
@@ -525,6 +738,7 @@ def score_rag_track(
 
     llm = build_judge_llm(judge_backend, judge_model, judge_rpm)
     embeddings = build_embeddings()
+    trace = build_judge_trace([r["id"] for r in scorable], keep_prompts=keep_prompts)
 
     # max_workers=1 keeps free-tier judges inside their rate limit; the long
     # max_wait lets tenacity ride out a 429 instead of failing the whole run.
@@ -546,6 +760,7 @@ def score_rag_track(
         llm=llm,
         embeddings=embeddings,
         run_config=run_config,
+        callbacks=[trace],
         show_progress=True,
         raise_exceptions=False,
     )
@@ -564,19 +779,41 @@ def score_rag_track(
         scores[col] = round(statistics.mean(vals), 4) if vals else None
 
     rows = []
-    for r, (_, row) in zip(scorable, df.iterrows()):
-        entry = {"id": r["id"], "n_chunks": r["n_chunks"], "latency_s": r["latency_s"]}
+    for i, (r, (_, row)) in enumerate(zip(scorable, df.iterrows())):
+        entry: dict[str, Any] = {
+            "id": r["id"], "n_chunks": r["n_chunks"], "latency_s": r["latency_s"],
+        }
+        status: dict[str, str] = {}
+        errors: dict[str, str] = {}
         for col in metric_cols:
             v = row[col]
-            entry[col] = round(float(v), 4) if v is not None and v == v else None
+            if v is not None and v == v:
+                entry[col] = round(float(v), 4)
+                status[col] = "ok"
+                continue
+            entry[col] = None
+            err = trace.metric_errors.get((i, col))
+            if err:
+                status[col] = classify_judge_error(err["type"], err["message"])
+                errors[col] = f"{err['type']}: {err['message']}"
+            else:
+                status[col] = "undefined"
+        entry["status"] = status
+        if errors:
+            entry["errors"] = errors
         rows.append(entry)
 
-    return {"n": len(scorable), "skipped": skipped, "scores": scores, "rows": rows}
+    track = {"n": len(scorable), "skipped": skipped, "skipped_reasons": skipped_reasons,
+             "scores": scores, "rows": rows}
+    track["coverage"] = metric_coverage(track)
+    track["complete"] = is_complete(track)
+    track["_judge_calls"] = list(trace.calls.values())
+    return track
 
 
 # ── Reporting ─────────────────────────────────────────────────────────────────
 
-def render_markdown(runs: list[dict]) -> str:
+def render_markdown(runs: list[dict], strict: bool = False) -> str:
     """Render one or more configurations as a comparison table."""
     lines = [
         "# RAG Evaluation Report",
@@ -591,22 +828,113 @@ def render_markdown(runs: list[dict]) -> str:
             if k not in metric_keys:
                 metric_keys.append(k)
 
+    coverages = [metric_coverage(run["rag_track"]) for run in runs]
+    any_partial = any(
+        c["scored"] < c["total"] for cov in coverages for c in cov.values()
+    )
+
     if metric_keys:
         lines += [
             "## Retrieval and generation quality (content + metadata queries)",
             "",
+        ]
+        if any_partial:
+            lines += [
+                "A cell written as `mean (scored/total)` covers only some of the "
+                "questions. It is not comparable to a mean over all of them; use "
+                "the same-question table below.",
+                "",
+            ]
+        lines += [
             "| Config | n | " + " | ".join(metric_keys) + " |",
             "|---|---|" + "---|" * len(metric_keys),
         ]
-        for run in runs:
+        for run, cov in zip(runs, coverages):
             s = run["rag_track"].get("scores", {})
-            cells = [
-                f"{s[k]:.3f}" if s.get(k) is not None else "—" for k in metric_keys
-            ]
+            cells = []
+            for k in metric_keys:
+                c = cov.get(k)
+                partial = bool(c) and c["scored"] < c["total"]
+                if s.get(k) is None:
+                    cell = "—"
+                elif partial and strict:
+                    cell = "withheld"
+                else:
+                    cell = f"{s[k]:.3f}"
+                if partial:
+                    cell += f" ({c['scored']}/{c['total']})"
+                cells.append(cell)
             lines.append(
                 f"| {run['config']['label']} | {run['rag_track']['n']} | "
                 + " | ".join(cells)
                 + " |"
+            )
+        lines.append("")
+
+    if any_partial:
+        lines += [
+            "## Incomplete coverage",
+            "",
+            "| Config | Metric | Scored | Why the rest are missing |",
+            "|---|---|---|---|",
+        ]
+        for run, cov in zip(runs, coverages):
+            for k in metric_keys:
+                c = cov.get(k)
+                if not c or c["scored"] == c["total"]:
+                    continue
+                counts: dict[str, int] = {}
+                for reason in c["missing"].values():
+                    counts[reason] = counts.get(reason, 0) + 1
+                why = "; ".join(
+                    f"{n} × {MISSING_REASONS.get(reason, reason)}"
+                    for reason, n in sorted(counts.items())
+                )
+                lines.append(
+                    f"| {run['config']['label']} | {k} | {c['scored']}/{c['total']} | {why} |"
+                )
+        lines.append("")
+
+    scored_runs = [run for run in runs if run["rag_track"].get("rows")]
+    if any_partial and len(scored_runs) > 1:
+        lines += [
+            "## Same-question comparison",
+            "",
+            "Each metric restricted to the questions every run scored, so all "
+            "runs are compared on an identical set.",
+            "",
+            "| Config | " + " | ".join(metric_keys) + " |",
+            "|---|" + "---|" * len(metric_keys),
+        ]
+        matched = {k: matched_question_means(scored_runs, k) for k in metric_keys}
+        lines.append(
+            "| *questions in common* | "
+            + " | ".join(str(len(matched[k][0])) for k in metric_keys)
+            + " |"
+        )
+        for i, run in enumerate(scored_runs):
+            cells = [
+                f"{matched[k][1][i]:.3f}" if matched[k][1][i] is not None else "—"
+                for k in metric_keys
+            ]
+            lines.append(f"| {run['config']['label']} | " + " | ".join(cells) + " |")
+        lines.append("")
+
+    if any("judge_model" in run["config"] for run in runs):
+        lines += [
+            "## Run configuration",
+            "",
+            "| Config | Mode | Generator | Judge | Judge temp. | RAGAS |",
+            "|---|---|---|---|---|---|",
+        ]
+        for run in runs:
+            c = run["config"]
+            prov = run.get("provenance", {})
+            lines.append(
+                f"| {c['label']} | {c.get('mode', 'generate')} | "
+                f"{c.get('backend')}/{c.get('model')} | "
+                f"{c.get('judge_backend')}/{c.get('judge_model')} | "
+                f"{c.get('judge_temperature')} | {prov.get('ragas')} |"
             )
         lines.append("")
 
@@ -684,42 +1012,88 @@ def render_markdown(runs: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def save_results(runs: list[dict], stamp: str | None = None) -> tuple[Path, Path]:
+def save_results(
+    runs: list[dict], stamp: str | None = None, strict: bool = False
+) -> tuple[Path, Path]:
+    """
+    Write eval-<stamp>.json and .md, plus eval-<stamp>.judge.jsonl holding one
+    line per judge call (question, metric, prompt hash, raw output, error).
+    Keys starting with "_" are working data and stay out of the main JSON.
+    """
     RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     if stamp is None:
         stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
 
+    public = [{k: v for k, v in run.items() if not k.startswith("_")} for run in runs]
     json_path = RESULTS_DIR / f"eval-{stamp}.json"
-    json_path.write_text(json.dumps(runs, indent=2))
+    json_path.write_text(json.dumps(public, indent=2))
+
+    judge_lines = [
+        json.dumps({"run": run["config"]["label"], **call})
+        for run in runs
+        for call in run.get("_judge_calls", [])
+    ]
+    if judge_lines:
+        judge_path = RESULTS_DIR / f"eval-{stamp}.judge.jsonl"
+        judge_path.write_text("\n".join(judge_lines) + "\n")
 
     md_path = RESULTS_DIR / f"eval-{stamp}.md"
-    md_path.write_text(render_markdown(runs))
+    md_path.write_text(render_markdown(public, strict=strict))
 
     latest = RESULTS_DIR / "latest.md"
-    latest.write_text(render_markdown(runs))
+    latest.write_text(render_markdown(public, strict=strict))
 
     return json_path, md_path
 
 
+# ── Provenance ────────────────────────────────────────────────────────────────
+
+def _pkg_version(name: str) -> str | None:
+    try:
+        return importlib.metadata.version(name)
+    except importlib.metadata.PackageNotFoundError:
+        return None
+
+
+def _git(*args: str) -> str | None:
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(ROOT), *args],
+            capture_output=True, text=True, timeout=10, check=True,
+        )
+        return out.stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def collect_provenance(question_ids: list[str]) -> dict[str, Any]:
+    """Everything needed to say which code and which libraries produced a score."""
+    dirty = _git("status", "--porcelain", "--untracked-files=no")
+    return {
+        "started_at": datetime.now().isoformat(timespec="seconds"),
+        "harness_commit": _git("rev-parse", "HEAD"),
+        "harness_dirty": bool(dirty) if dirty is not None else None,
+        "python": platform.python_version(),
+        "ragas": _pkg_version("ragas"),          # the judge-output parser lives here
+        "langchain_core": _pkg_version("langchain-core"),
+        "golden_set_sha256": hashlib.sha256(GOLDEN_SET.read_bytes()).hexdigest(),
+        "question_ids": question_ids,
+    }
+
+
 # ── Orchestration ─────────────────────────────────────────────────────────────
 
-def run_one_config(
-    questions: list[dict],
-    label: str,
-    backend: str,
-    model: str,
-    top_k: int,
+def score_records(
+    records: list[dict],
+    config: dict,
     track: str,
-    judge_backend: str,
-    judge_model: str | None,
     max_workers: int,
-    throttle: float,
     judge_rpm: float | None = None,
+    keep_prompts: bool = False,
 ) -> dict:
-    print(f"\n=== {label} ===")
-    print(f"Generating answers (backend={backend}, model={model}, top_k={top_k})")
-
-    records = generate_predictions(questions, backend, model, top_k, throttle)
+    """Score a set of generated (or reloaded) records and assemble one run."""
+    judge_backend = config["judge_backend"]
+    judge_model = config["judge_model"]
 
     routing = score_routing(records)
 
@@ -734,29 +1108,123 @@ def run_one_config(
         effective_rpm = (judge_rpm if judge_rpm is not None
                          else _JUDGE_RPM_DEFAULTS.get(judge_backend, 15))
         print(f"\nScoring {len(rag_records)} samples with RAGAS "
-              f"(judge={judge_backend}, workers={max_workers}, "
+              f"(judge={judge_backend}/{judge_model}, workers={max_workers}, "
               f"rate_limit={effective_rpm or 'off'} req/min)")
         ragas_scores = score_rag_track(rag_records, judge_backend, judge_model,
-                                       max_workers, judge_rpm)
+                                       max_workers, judge_rpm, keep_prompts)
     else:
-        ragas_scores = {"n": 0, "skipped": [], "scores": {}, "rows": []}
+        ragas_scores = {"n": 0, "skipped": [], "skipped_reasons": {}, "scores": {},
+                        "coverage": {}, "complete": True, "rows": [],
+                        "_judge_calls": []}
+
+    judge_calls = ragas_scores.pop("_judge_calls", [])
+
+    if not ragas_scores.get("complete", True):
+        for metric, cov in ragas_scores["coverage"].items():
+            if cov["scored"] < cov["total"]:
+                print(f"  WARNING {config['label']}: {metric} scored on "
+                      f"{cov['scored']}/{cov['total']} questions")
 
     return {
         "config": {
-            "label": label,
-            "backend": backend,
-            "model": model,
-            "top_k": top_k,
-            "judge_backend": judge_backend,
+            **config,
+            "judge_temperature": JUDGE_TEMPERATURE,
             "judge_rpm": (judge_rpm if judge_rpm is not None
                           else _JUDGE_RPM_DEFAULTS.get(judge_backend, 15)),
             "embed_model": rag.EMBED_MODEL,
         },
+        "provenance": collect_provenance([r["id"] for r in records]),
         "rag_track": ragas_scores,
         "exact_track": exact,
         "routing": routing,
-        "records": [{k: v for k, v in r.items() if k != "contexts"} for r in records],
+        # Contexts are kept: three of the four RAGAS metrics need them, so a
+        # judge replay (--replay) is impossible without them.
+        "records": records,
+        "_judge_calls": judge_calls,
     }
+
+
+def run_one_config(
+    questions: list[dict],
+    label: str,
+    backend: str,
+    model: str,
+    top_k: int,
+    track: str,
+    judge_backend: str,
+    judge_model: str | None,
+    max_workers: int,
+    throttle: float,
+    judge_rpm: float | None = None,
+    keep_prompts: bool = False,
+) -> dict:
+    print(f"\n=== {label} ===")
+    print(f"Generating answers (backend={backend}, model={model}, top_k={top_k})")
+
+    records = generate_predictions(questions, backend, model, top_k, throttle)
+    config = {
+        "label": label,
+        "mode": "generate",
+        "backend": backend,
+        "model": model,
+        "top_k": top_k,
+        "judge_backend": judge_backend,
+        "judge_model": judge_model,
+    }
+    return score_records(records, config, track, max_workers, judge_rpm, keep_prompts)
+
+
+def load_replay_runs(path: Path, label: str | None = None) -> list[dict]:
+    """
+    Load saved runs to re-judge. Each must carry the retrieved contexts, which
+    result files written before contexts were saved do not.
+    """
+    data = json.loads(path.read_text())
+    runs = data if isinstance(data, list) else [data]
+    if label is not None:
+        runs = [r for r in runs if r["config"]["label"] == label]
+        if not runs:
+            raise SystemExit(f"No run labelled {label!r} in {path}")
+    for run in runs:
+        rag_records = [r for r in run["records"] if r["expected_type"] in RAG_TRACK_TYPES]
+        if any("contexts" not in r for r in rag_records):
+            raise SystemExit(
+                f"{path} (run {run['config']['label']!r}) was saved without the "
+                "retrieved contexts, so the judge cannot be replayed over it. "
+                "Generate a fresh run with this version of the harness and "
+                "replay that file instead."
+            )
+    return runs
+
+
+def replay_one(
+    source: dict,
+    source_file: Path,
+    label: str,
+    track: str,
+    judge_backend: str,
+    judge_model: str | None,
+    max_workers: int,
+    judge_rpm: float | None = None,
+    keep_prompts: bool = False,
+) -> dict:
+    """Re-judge saved answers. Nothing is regenerated or re-retrieved."""
+    print(f"\n=== {label} ===")
+    print(f"Replaying the judge over saved answers from {source_file.name}")
+    src = source["config"]
+    config = {
+        "label": label,
+        "mode": "replay",
+        "backend": src.get("backend"),
+        "model": src.get("model"),
+        "top_k": src.get("top_k"),
+        "judge_backend": judge_backend,
+        "judge_model": judge_model,
+        "source_file": source_file.name,
+        "source_label": src["label"],
+    }
+    return score_records(source["records"], config, track, max_workers,
+                         judge_rpm, keep_prompts)
 
 
 def main() -> None:
@@ -790,54 +1258,108 @@ def main() -> None:
                         "based on that provider's free-tier limit; pass 0 to disable "
                         "(paid keys). max_workers alone does NOT bound request rate.")
     p.add_argument("--limit", type=int, default=None, help="Evaluate only the first N questions")
+    p.add_argument("--repeats", type=int, default=1, metavar="N",
+                   help="Run each configuration N times. With --replay this isolates "
+                        "judge variance; without it, each repeat regenerates and re-judges.")
+    p.add_argument("--replay", type=Path, default=None, metavar="RESULTS_JSON",
+                   help="Re-judge the saved answers and contexts in a results file "
+                        "instead of generating new answers.")
+    p.add_argument("--replay-label", default=None, metavar="LABEL",
+                   help="With --replay: only the run with this label (default: every run in the file)")
+    p.add_argument("--save-judge-prompts", action="store_true",
+                   help="Also store the full judge prompts in the .judge.jsonl file "
+                        "(default: raw outputs plus a prompt hash)")
+    p.add_argument("--strict-coverage", action="store_true",
+                   help="Withhold any mean that does not cover every question, and "
+                        "stop the sweep after the first incomplete run (exit code 2).")
     args = p.parse_args()
 
-    questions = load_golden_set()
-    if args.limit:
-        questions = questions[: args.limit]
+    if args.repeats < 1:
+        p.error("--repeats must be at least 1")
+    if args.replay and args.track == "exact":
+        p.error("--replay re-runs the judge, so it cannot be combined with --track exact")
 
-    backend, model = rag.resolve_backend(args.backend or llm_cfg.get("backend") or "auto")
-    if args.model:
-        model = args.model
-    elif not args.backend and llm_cfg.get("model"):
-        model = llm_cfg["model"]
+    def repeat_label(base: str, i: int) -> str:
+        return f"{base} (run {i + 1})" if args.repeats > 1 else base
 
-    if args.track in {"all", "rag"}:
-        judge_backend, judge_model = resolve_judge_backend(args.judge_backend, backend)
-        if args.judge_model:
-            judge_model = args.judge_model
+    jobs: list[tuple[str, Any]] = []   # (label, zero-argument callable → run dict)
+
+    if args.replay:
+        for source in load_replay_runs(args.replay, args.replay_label):
+            judge_backend, judge_model = resolve_judge_backend(
+                args.judge_backend, source["config"].get("backend") or ""
+            )
+            if args.judge_model:
+                judge_model = args.judge_model
+            print(f"Judge:     backend={judge_backend} model={judge_model}")
+            for i in range(args.repeats):
+                label = repeat_label(f"{source['config']['label']}, judge replay", i)
+                jobs.append((label, lambda source=source, label=label,
+                             jb=judge_backend, jm=judge_model: replay_one(
+                    source=source, source_file=args.replay, label=label,
+                    track=args.track, judge_backend=jb, judge_model=jm,
+                    max_workers=args.max_workers, judge_rpm=args.judge_rpm,
+                    keep_prompts=args.save_judge_prompts,
+                )))
     else:
-        judge_backend, judge_model = args.judge_backend, args.judge_model
+        questions = load_golden_set()
+        if args.limit:
+            questions = questions[: args.limit]
 
-    print(f"Generator: backend={backend} model={model}")
-    if args.track in {"all", "rag"}:
-        print(f"Judge:     backend={judge_backend} model={judge_model}")
+        backend, model = rag.resolve_backend(args.backend or llm_cfg.get("backend") or "auto")
+        if args.model:
+            model = args.model
+        elif not args.backend and llm_cfg.get("model"):
+            model = llm_cfg["model"]
 
-    top_ks = args.sweep_top_k or [args.top_k]
+        if args.track in {"all", "rag"}:
+            judge_backend, judge_model = resolve_judge_backend(args.judge_backend, backend)
+            if args.judge_model:
+                judge_model = args.judge_model
+        else:
+            judge_backend, judge_model = args.judge_backend, args.judge_model
+
+        print(f"Generator: backend={backend} model={model}")
+        if args.track in {"all", "rag"}:
+            print(f"Judge:     backend={judge_backend} model={judge_model}")
+
+        for k in args.sweep_top_k or [args.top_k]:
+            for i in range(args.repeats):
+                label = repeat_label(f"top_k={k}", i)
+                jobs.append((label, lambda k=k, label=label: run_one_config(
+                    questions=questions,
+                    label=label,
+                    backend=backend,
+                    model=model,
+                    top_k=k,
+                    track=args.track,
+                    judge_backend=judge_backend,
+                    judge_model=judge_model,
+                    max_workers=args.max_workers,
+                    throttle=args.throttle,
+                    judge_rpm=args.judge_rpm,
+                    keep_prompts=args.save_judge_prompts,
+                )))
+
     runs = []
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    for k in top_ks:
-        runs.append(
-            run_one_config(
-                questions=questions,
-                label=f"top_k={k}",
-                backend=backend,
-                model=model,
-                top_k=k,
-                track=args.track,
-                judge_backend=judge_backend,
-                judge_model=judge_model,
-                max_workers=args.max_workers,
-                throttle=args.throttle,
-                judge_rpm=args.judge_rpm,
-            )
-        )
-        json_path, md_path = save_results(runs, stamp=stamp)
-        print(f"\n[checkpoint] Saved {len(runs)}/{len(top_ks)} config(s) to {json_path}")
+    stopped_early = False
+    for label, job in jobs:
+        runs.append(job())
+        json_path, md_path = save_results(runs, stamp=stamp, strict=args.strict_coverage)
+        print(f"\n[checkpoint] Saved {len(runs)}/{len(jobs)} run(s) to {json_path}")
+        if args.strict_coverage and not runs[-1]["rag_track"].get("complete", True):
+            stopped_early = True
+            print(f"\n--strict-coverage: {label} did not score every question. "
+                  f"Stopping before the remaining {len(jobs) - len(runs)} run(s).")
+            break
 
-    print("\n" + render_markdown(runs))
+    public = [{k: v for k, v in run.items() if not k.startswith("_")} for run in runs]
+    print("\n" + render_markdown(public, strict=args.strict_coverage))
     print(f"Saved: {json_path}")
     print(f"Saved: {md_path}")
+    if stopped_early:
+        sys.exit(2)
 
 
 if __name__ == "__main__":
