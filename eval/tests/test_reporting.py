@@ -76,6 +76,7 @@ def test_complete_sweep_gets_no_coverage_sections(sweep):
         ("ResourceExhausted", "429 You exceeded your current quota", "rate_limit"),
         ("RuntimeError", "Too Many Requests", "rate_limit"),
         ("TimeoutError", "", "timeout"),
+        ("RuntimeError", "Timeout should be used inside a task", "judge_error"),
         ("ValueError", "something else", "judge_error"),
     ],
 )

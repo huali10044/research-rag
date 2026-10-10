@@ -138,6 +138,7 @@ parser change can be checked against the same judge responses. Pass
 | `timeout` | the judge call timed out |
 | `parse_failure` | the judge answered but the RAGAS parser could not read it |
 | `judge_error` | the judge call failed for another reason |
+| `harness_error` | the metric failed before any judge call was made: a harness or library problem, not a judge result |
 | `undefined` | the metric returned no value and raised no error |
 | `generation_error` | the generator failed, so there was nothing to score |
 | `no_context` | retrieval returned no chunks |
@@ -165,6 +166,11 @@ python eval/run_eval.py --top-k 8 --repeats 3
 Replay needs the retrieved contexts, so it only works on result files written
 by this version of the harness. The September sweep files were saved without
 them and cannot be replayed.
+
+**Python 3.14.** RAGAS 0.2.x applies `nest_asyncio` on import, which breaks
+asyncio on Python 3.14: every metric fails at once with "Timeout should be used
+inside a task" and no judge call is made. `run_eval.py` disables that patch on
+3.14, where a command-line run does not need it. The tests pass on 3.13 and 3.14.
 
 **Tests.** `pip install pytest && pytest eval/tests` runs without API keys. The
 tests use a stand-in judge to check failure reasons, raw-output capture and

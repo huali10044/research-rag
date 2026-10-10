@@ -90,11 +90,40 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+
+def _neutralise_nest_asyncio() -> None:
+    """
+    Keep RAGAS working on Python 3.14.
+
+    ragas 0.2.x calls nest_asyncio.apply() when ragas.executor is imported.
+    nest_asyncio is unmaintained and on Python 3.14 its patch leaves
+    asyncio.current_task() returning None, so every metric dies at once with
+    "RuntimeError: Timeout should be used inside a task" and scores as NaN
+    without a single judge call being made.
+
+    nest_asyncio only matters when an event loop is already running (a
+    notebook). This harness is a command-line script with no running loop, so
+    on 3.14 the patch is turned into a no-op before ragas is imported. Earlier
+    Python versions are left exactly as they were.
+    """
+    if sys.version_info < (3, 14) or "ragas" in sys.modules:
+        return
+    try:
+        import nest_asyncio
+    except ImportError:
+        return
+    nest_asyncio.apply = lambda *args, **kwargs: None
+
+
+_neutralise_nest_asyncio()
+
+
 # --- make src/ importable regardless of where this is invoked from ------------
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 
 import rag  # noqa: E402  (path setup must precede this import)
+
 
 EVAL_DIR = Path(__file__).resolve().parent
 GOLDEN_SET = EVAL_DIR / "golden_set.json"
@@ -528,6 +557,8 @@ MISSING_REASONS = {
     "timeout":          "judge call timed out",
     "parse_failure":    "judge answered but the RAGAS parser could not read it",
     "judge_error":      "judge call failed for another reason",
+    "harness_error":    "the metric failed before any judge call was made "
+                        "(a harness or library problem, not the judge)",
     "undefined":        "metric returned no value and raised no error",
     "generation_error": "the generator failed, so there was nothing to score",
     "no_context":       "retrieval returned no chunks",
@@ -544,7 +575,7 @@ def classify_judge_error(type_name: str, message: str) -> str:
                                "resource exhausted", "resourceexhausted",
                                "too many requests")):
         return "rate_limit"
-    if "timeout" in text or "timed out" in text:
+    if "timeout" in type_name.lower() or "timed out" in text:
         return "timeout"
     return "judge_error"
 
@@ -778,6 +809,8 @@ def score_rag_track(
         vals = [v for v in df[col].tolist() if v is not None and v == v]  # drop NaN
         scores[col] = round(statistics.mean(vals), 4) if vals else None
 
+    attempted = {(c["question_id"], c["metric"]) for c in trace.calls.values()}
+
     rows = []
     for i, (r, (_, row)) in enumerate(zip(scorable, df.iterrows())):
         entry: dict[str, Any] = {
@@ -794,7 +827,12 @@ def score_rag_track(
             entry[col] = None
             err = trace.metric_errors.get((i, col))
             if err:
-                status[col] = classify_judge_error(err["type"], err["message"])
+                # No judge call at all means the failure is ours, not the judge's.
+                status[col] = (
+                    classify_judge_error(err["type"], err["message"])
+                    if (r["id"], col) in attempted
+                    else "harness_error"
+                )
                 errors[col] = f"{err['type']}: {err['message']}"
             else:
                 status[col] = "undefined"
@@ -808,6 +846,18 @@ def score_rag_track(
     track["coverage"] = metric_coverage(track)
     track["complete"] = is_complete(track)
     track["_judge_calls"] = list(trace.calls.values())
+
+    harness_errors = sorted({
+        row["errors"][col]
+        for row in rows
+        for col, reason in row["status"].items()
+        if reason == "harness_error"
+    })
+    if harness_errors:
+        print("\n  ERROR: some metrics failed before any judge call was made. This is a "
+              "harness or library problem, not a judge result:")
+        for message in harness_errors[:3]:
+            print(f"    {message}")
     return track
 
 

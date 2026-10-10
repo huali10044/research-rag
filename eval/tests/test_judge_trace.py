@@ -10,14 +10,14 @@ import json
 
 import pytest
 
+import run_eval  # must precede ragas: it applies the Python 3.14 nest_asyncio fix
+
 pytest.importorskip("ragas")
 
 from langchain_core.embeddings import Embeddings  # noqa: E402
 from langchain_core.language_models.chat_models import BaseChatModel  # noqa: E402
 from langchain_core.messages import AIMessage  # noqa: E402
 from langchain_core.outputs import ChatGeneration, ChatResult  # noqa: E402
-
-import run_eval  # noqa: E402
 
 METRICS = ["faithfulness", "answer_relevancy",
            "llm_context_precision_with_reference", "context_recall"]
@@ -217,3 +217,24 @@ def test_saved_run_can_be_replayed_without_regenerating(stand_in, monkeypatch):
     assert replay["config"]["top_k"] == 8
     assert _row(replay["rag_track"], "ok-1")["faithfulness"] == 0.5
     assert replay["rag_track"]["coverage"] == run["rag_track"]["coverage"]
+
+
+def test_failure_before_any_judge_call_is_a_harness_error(stand_in, monkeypatch):
+    """
+    If a metric dies before calling the judge, that is not a judge result. This
+    is what a broken event loop looks like (Python 3.14 with nest_asyncio
+    applied): every score is NaN and no judge call is ever made.
+    """
+    from ragas.metrics import Faithfulness
+
+    async def broken(self, sample, callbacks):
+        raise RuntimeError("Timeout should be used inside a task")
+
+    monkeypatch.setattr(Faithfulness, "_single_turn_ascore", broken)
+    track = run_eval.score_rag_track(RECORDS[:1], "gemini", "stand-in-judge", max_workers=1)
+
+    row = _row(track, "ok-1")
+    assert row["faithfulness"] is None
+    assert row["status"]["faithfulness"] == "harness_error"
+    assert "Timeout should be used inside a task" in row["errors"]["faithfulness"]
+    assert row["status"]["context_recall"] == "ok"
