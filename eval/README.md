@@ -118,12 +118,12 @@ same judge, the same parser and the same questions. Each run therefore records:
 
 | Where | What |
 |---|---|
-| `config` | generator backend and model, judge backend and model, judge temperature, `mode` (`generate` or `replay`) |
+| `config` | generator backend and model, judge backend and model, judge temperature, judge time limit (`judge_timeout_s`), `mode` (`generate` or `replay`) |
 | `provenance` | RAGAS and langchain-core versions, Python version, harness commit, whether the code differed from it (`harness_dirty`, ignoring `data/chroma_db` and `eval/results`), golden-set hash, question ids, start time |
 | `records` | every answer **and its retrieved contexts** |
 | `rag_track.rows[].status` | per question and metric: `ok`, or the reason the score is missing |
 | `rag_track.coverage` | per metric: questions scored, questions expected, and the missing ids with reasons |
-| `eval-<stamp>.judge.jsonl` | one line per judge call: question, metric, prompt name, prompt hash, raw output, error |
+| `eval-<stamp>.judge.jsonl` | one line per judge call: question, metric, prompt name, prompt hash, raw output, error, start time and duration |
 
 The RAGAS version is the parser version: RAGAS parses the judge's output, so a
 RAGAS upgrade can change which outputs parse. Raw judge outputs are kept so a
@@ -135,7 +135,7 @@ parser change can be checked against the same judge responses. Pass
 | Status | Meaning |
 |---|---|
 | `rate_limit` | the judge API refused the call (quota or rate limit) |
-| `timeout` | the judge call timed out |
+| `timeout` | the metric ran past its time limit for that question (`--judge-timeout`) |
 | `parse_failure` | the judge answered but the RAGAS parser could not read it |
 | `judge_error` | the judge call failed for another reason |
 | `harness_error` | the metric failed before any judge call was made: a harness or library problem, not a judge result |
@@ -143,6 +143,16 @@ parser change can be checked against the same judge responses. Pass
 | `generation_error` | the generator failed, so there was nothing to score |
 | `no_context` | retrieval returned no chunks |
 | `unrecorded` | the result file predates reason tracking |
+
+**Time limit.** RAGAS gives each metric a fixed time per question (900 s by
+default; `--judge-timeout SECONDS` changes it). The limit covers the whole
+metric, not each judge call, and context precision makes one judge call per
+retrieved chunk (8 at k=8) while the other metrics make one to three. When the
+judge slows down, precision therefore times out first, on every question, which
+shows up as a timeout on every fourth job. Each call's duration in
+`.judge.jsonl` shows whether the judge was slow: at `--judge-rpm 10` a call
+waits about 6 s for the rate limiter, so durations far above that mean slow
+responses or retries inside the client.
 
 **Coverage.** A mean over 9 of 18 questions is not comparable to a mean over
 all 18. The report writes such a cell as `0.833 (9/18)`, lists why the rest are
