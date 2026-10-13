@@ -724,6 +724,33 @@ def matched_question_means(runs: list[dict], metric: str) -> tuple[list[str], li
 
 # ── Track 2: RAGAS ────────────────────────────────────────────────────────────
 
+# The four RAGAS metrics, by the column name they report under. Only the last
+# two read the reference answer, so a reference change only needs those two
+# re-scored (--metrics), which is far cheaper in judge calls.
+ALL_METRICS = [
+    "faithfulness",
+    "answer_relevancy",
+    "llm_context_precision_with_reference",
+    "context_recall",
+]
+REFERENCE_METRICS = ["llm_context_precision_with_reference", "context_recall"]
+
+
+def build_metrics(names: list[str]) -> list:
+    from ragas.metrics import (
+        Faithfulness,
+        LLMContextPrecisionWithReference,
+        LLMContextRecall,
+        ResponseRelevancy,
+    )
+    factory = {
+        "faithfulness": Faithfulness,
+        "answer_relevancy": ResponseRelevancy,
+        "llm_context_precision_with_reference": LLMContextPrecisionWithReference,
+        "context_recall": LLMContextRecall,
+    }
+    return [factory[n]() for n in names]
+
 def score_rag_track(
     records: list[dict],
     judge_backend: str,
@@ -731,15 +758,12 @@ def score_rag_track(
     max_workers: int,
     judge_rpm: float | None = None,
     keep_prompts: bool = False,
+    metrics: list[str] | None = None,
 ) -> dict[str, Any]:
     from ragas import EvaluationDataset, SingleTurnSample, evaluate
-    from ragas.metrics import (
-        Faithfulness,
-        LLMContextPrecisionWithReference,
-        LLMContextRecall,
-        ResponseRelevancy,
-    )
     from ragas.run_config import RunConfig
+
+    metrics = metrics or ALL_METRICS
 
     scorable = [r for r in records if r["contexts"] and not r["error"]]
     skipped_reasons = {
@@ -768,7 +792,8 @@ def score_rag_track(
     )
 
     llm = build_judge_llm(judge_backend, judge_model, judge_rpm)
-    embeddings = build_embeddings()
+    # Only answer relevancy uses embeddings; skip loading the model otherwise.
+    embeddings = build_embeddings() if "answer_relevancy" in metrics else None
     trace = build_judge_trace([r["id"] for r in scorable], keep_prompts=keep_prompts)
 
     # max_workers=1 keeps free-tier judges inside their rate limit; the long
@@ -782,12 +807,7 @@ def score_rag_track(
 
     result = evaluate(
         dataset=dataset,
-        metrics=[
-            Faithfulness(),
-            ResponseRelevancy(),
-            LLMContextPrecisionWithReference(),
-            LLMContextRecall(),
-        ],
+        metrics=build_metrics(metrics),
         llm=llm,
         embeddings=embeddings,
         run_config=run_config,
@@ -1116,9 +1136,18 @@ def _git(*args: str) -> str | None:
         return None
 
 
-def collect_provenance(question_ids: list[str]) -> dict[str, Any]:
-    """Everything needed to say which code and which libraries produced a score."""
-    dirty = _git("status", "--porcelain", "--untracked-files=no")
+def collect_provenance(
+    question_ids: list[str], golden_set_sha256: str | None = None
+) -> dict[str, Any]:
+    """
+    Everything needed to say which code and which libraries produced a score.
+
+    "Dirty" means the code differs from the recorded commit. The vector store
+    and the results folder are excluded: both change on every run, and neither
+    is code.
+    """
+    dirty = _git("status", "--porcelain", "--untracked-files=no", "--", ".",
+                 ":(exclude)data/chroma_db", ":(exclude)eval/results")
     return {
         "started_at": datetime.now().isoformat(timespec="seconds"),
         "harness_commit": _git("rev-parse", "HEAD"),
@@ -1126,7 +1155,10 @@ def collect_provenance(question_ids: list[str]) -> dict[str, Any]:
         "python": platform.python_version(),
         "ragas": _pkg_version("ragas"),          # the judge-output parser lives here
         "langchain_core": _pkg_version("langchain-core"),
-        "golden_set_sha256": hashlib.sha256(GOLDEN_SET.read_bytes()).hexdigest(),
+        # Which version of the reference answers was used. For a replay that
+        # keeps the source run's references, this is the source run's hash.
+        "golden_set_sha256": golden_set_sha256
+        or hashlib.sha256(GOLDEN_SET.read_bytes()).hexdigest(),
         "question_ids": question_ids,
     }
 
@@ -1140,6 +1172,8 @@ def score_records(
     max_workers: int,
     judge_rpm: float | None = None,
     keep_prompts: bool = False,
+    metrics: list[str] | None = None,
+    golden_set_sha256: str | None = None,
 ) -> dict:
     """Score a set of generated (or reloaded) records and assemble one run."""
     judge_backend = config["judge_backend"]
@@ -1161,7 +1195,8 @@ def score_records(
               f"(judge={judge_backend}/{judge_model}, workers={max_workers}, "
               f"rate_limit={effective_rpm or 'off'} req/min)")
         ragas_scores = score_rag_track(rag_records, judge_backend, judge_model,
-                                       max_workers, judge_rpm, keep_prompts)
+                                       max_workers, judge_rpm, keep_prompts,
+                                       metrics)
     else:
         ragas_scores = {"n": 0, "skipped": [], "skipped_reasons": {}, "scores": {},
                         "coverage": {}, "complete": True, "rows": [],
@@ -1182,8 +1217,10 @@ def score_records(
             "judge_rpm": (judge_rpm if judge_rpm is not None
                           else _JUDGE_RPM_DEFAULTS.get(judge_backend, 15)),
             "embed_model": rag.EMBED_MODEL,
+            "metrics": metrics or ALL_METRICS,
         },
-        "provenance": collect_provenance([r["id"] for r in records]),
+        "provenance": collect_provenance([r["id"] for r in records],
+                                         golden_set_sha256),
         "rag_track": ragas_scores,
         "exact_track": exact,
         "routing": routing,
@@ -1207,6 +1244,7 @@ def run_one_config(
     throttle: float,
     judge_rpm: float | None = None,
     keep_prompts: bool = False,
+    metrics: list[str] | None = None,
 ) -> dict:
     print(f"\n=== {label} ===")
     print(f"Generating answers (backend={backend}, model={model}, top_k={top_k})")
@@ -1221,7 +1259,8 @@ def run_one_config(
         "judge_backend": judge_backend,
         "judge_model": judge_model,
     }
-    return score_records(records, config, track, max_workers, judge_rpm, keep_prompts)
+    return score_records(records, config, track, max_workers, judge_rpm, keep_prompts,
+                         metrics)
 
 
 def load_replay_runs(path: Path, label: str | None = None) -> list[dict]:
@@ -1247,6 +1286,30 @@ def load_replay_runs(path: Path, label: str | None = None) -> list[dict]:
     return runs
 
 
+def refresh_references(records: list[dict]) -> tuple[list[dict], list[str]]:
+    """
+    Copy the records with each reference (and must_contain list) replaced by
+    the current golden set's. Returns the copies and the ids whose reference
+    changed. Answers and retrieved contexts are untouched.
+    """
+    golden = {q["id"]: q for q in load_golden_set(GOLDEN_SET)}
+    missing = [r["id"] for r in records if r["id"] not in golden]
+    if missing:
+        raise SystemExit(
+            f"--refresh-references: these saved questions are not in "
+            f"{GOLDEN_SET.name}: {missing}"
+        )
+    refreshed, changed = [], []
+    for r in records:
+        q = golden[r["id"]]
+        new = {**r, "reference": q["reference"],
+               "must_contain": q.get("must_contain", [])}
+        if new["reference"] != r["reference"]:
+            changed.append(r["id"])
+        refreshed.append(new)
+    return refreshed, changed
+
+
 def replay_one(
     source: dict,
     source_file: Path,
@@ -1257,11 +1320,24 @@ def replay_one(
     max_workers: int,
     judge_rpm: float | None = None,
     keep_prompts: bool = False,
+    metrics: list[str] | None = None,
+    refresh_refs: bool = False,
 ) -> dict:
-    """Re-judge saved answers. Nothing is regenerated or re-retrieved."""
+    """
+    Re-judge saved answers. Nothing is regenerated or re-retrieved. With
+    refresh_refs, the current golden-set references replace the saved ones,
+    so a reference rewrite can be measured on identical answers.
+    """
     print(f"\n=== {label} ===")
     print(f"Replaying the judge over saved answers from {source_file.name}")
     src = source["config"]
+    records = source["records"]
+    golden_sha = source.get("provenance", {}).get("golden_set_sha256")
+    changed: list[str] = []
+    if refresh_refs:
+        records, changed = refresh_references(records)
+        golden_sha = None  # recorded from the current golden set
+        print(f"Using current references: {len(changed)} of {len(records)} changed")
     config = {
         "label": label,
         "mode": "replay",
@@ -1272,9 +1348,11 @@ def replay_one(
         "judge_model": judge_model,
         "source_file": source_file.name,
         "source_label": src["label"],
+        "references": "current golden set" if refresh_refs else "saved with source run",
+        "references_changed": changed,
     }
-    return score_records(source["records"], config, track, max_workers,
-                         judge_rpm, keep_prompts)
+    return score_records(records, config, track, max_workers,
+                         judge_rpm, keep_prompts, metrics, golden_sha)
 
 
 def main() -> None:
@@ -1319,6 +1397,13 @@ def main() -> None:
     p.add_argument("--save-judge-prompts", action="store_true",
                    help="Also store the full judge prompts in the .judge.jsonl file "
                         "(default: raw outputs plus a prompt hash)")
+    p.add_argument("--metrics", nargs="+", choices=ALL_METRICS, default=None,
+                   metavar="METRIC",
+                   help="Score only these RAGAS metrics (default: all four). "
+                        "Choices: " + ", ".join(ALL_METRICS))
+    p.add_argument("--refresh-references", action="store_true",
+                   help="With --replay: judge the saved answers against the current "
+                        "golden-set references instead of the ones saved with the run.")
     p.add_argument("--strict-coverage", action="store_true",
                    help="Withhold any mean that does not cover every question, and "
                         "stop the sweep after the first incomplete run (exit code 2).")
@@ -1328,6 +1413,8 @@ def main() -> None:
         p.error("--repeats must be at least 1")
     if args.replay and args.track == "exact":
         p.error("--replay re-runs the judge, so it cannot be combined with --track exact")
+    if args.refresh_references and not args.replay:
+        p.error("--refresh-references only applies to --replay")
 
     def repeat_label(base: str, i: int) -> str:
         return f"{base} (run {i + 1})" if args.repeats > 1 else base
@@ -1349,7 +1436,8 @@ def main() -> None:
                     source=source, source_file=args.replay, label=label,
                     track=args.track, judge_backend=jb, judge_model=jm,
                     max_workers=args.max_workers, judge_rpm=args.judge_rpm,
-                    keep_prompts=args.save_judge_prompts,
+                    keep_prompts=args.save_judge_prompts, metrics=args.metrics,
+                    refresh_refs=args.refresh_references,
                 )))
     else:
         questions = load_golden_set()
@@ -1389,6 +1477,7 @@ def main() -> None:
                     throttle=args.throttle,
                     judge_rpm=args.judge_rpm,
                     keep_prompts=args.save_judge_prompts,
+                    metrics=args.metrics,
                 )))
 
     runs = []

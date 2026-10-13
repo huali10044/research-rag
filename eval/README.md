@@ -119,7 +119,7 @@ same judge, the same parser and the same questions. Each run therefore records:
 | Where | What |
 |---|---|
 | `config` | generator backend and model, judge backend and model, judge temperature, `mode` (`generate` or `replay`) |
-| `provenance` | RAGAS and langchain-core versions, Python version, harness commit, golden-set hash, question ids, start time |
+| `provenance` | RAGAS and langchain-core versions, Python version, harness commit, whether the code differed from it (`harness_dirty`, ignoring `data/chroma_db` and `eval/results`), golden-set hash, question ids, start time |
 | `records` | every answer **and its retrieved contexts** |
 | `rag_track.rows[].status` | per question and metric: `ok`, or the reason the score is missing |
 | `rag_track.coverage` | per metric: questions scored, questions expected, and the missing ids with reasons |
@@ -162,6 +162,21 @@ python eval/run_eval.py --replay eval/results/eval-<stamp>.json --repeats 3
 # Generator + judge variance: three fresh generations under the same judge
 python eval/run_eval.py --top-k 8 --repeats 3
 ```
+
+**Changing the reference answers.** Context precision and context recall are
+the only metrics that read the reference. To measure the effect of a reference
+rewrite on identical answers, replay with the current golden set and score just
+those two metrics (about 160 judge calls per pass at k=8 instead of about 257):
+
+```bash
+python eval/run_eval.py --replay eval/results/eval-<stamp>.json \
+  --refresh-references \
+  --metrics context_recall llm_context_precision_with_reference
+```
+
+The run records `references: current golden set`, the ids whose reference
+changed, and the golden-set hash. A replay without `--refresh-references`
+keeps the source run's references and records the source run's hash.
 
 Replay needs the retrieved contexts, so it only works on result files written
 by this version of the harness. The September sweep files were saved without
