@@ -238,3 +238,122 @@ def test_failure_before_any_judge_call_is_a_harness_error(stand_in, monkeypatch)
     assert row["status"]["faithfulness"] == "harness_error"
     assert "Timeout should be used inside a task" in row["errors"]["faithfulness"]
     assert row["status"]["context_recall"] == "ok"
+
+
+def test_metric_subset_scores_only_those_metrics(stand_in, monkeypatch):
+    """--metrics: only the named metrics are judged, and no embedder is loaded."""
+    def no_embeddings():
+        raise AssertionError("embeddings are only needed for answer relevancy")
+
+    monkeypatch.setattr(run_eval, "build_embeddings", no_embeddings)
+    track = run_eval.score_rag_track(RECORDS[:1], "gemini", "stand-in-judge",
+                                     max_workers=1, metrics=run_eval.REFERENCE_METRICS)
+
+    assert set(track["scores"]) == set(run_eval.REFERENCE_METRICS)
+    row = _row(track, "ok-1")
+    assert "faithfulness" not in row and "answer_relevancy" not in row
+    assert {c["metric"] for c in track["_judge_calls"]} == set(run_eval.REFERENCE_METRICS)
+
+
+def test_replay_can_swap_in_current_references(stand_in, monkeypatch, tmp_path):
+    """--refresh-references: same answers and chunks, new reference answers."""
+    import hashlib
+
+    config = {"label": "top_k=8", "mode": "generate", "backend": "groq",
+              "model": "gen-model", "top_k": 8,
+              "judge_backend": "gemini", "judge_model": "stand-in-judge"}
+    run = run_eval.score_records(RECORDS[:1], config, track="rag", max_workers=1,
+                                 metrics=run_eval.REFERENCE_METRICS)
+    json_path, _ = run_eval.save_results([run], stamp="refs")
+    [source] = run_eval.load_replay_runs(json_path)
+    source_hash = source["provenance"]["golden_set_sha256"]
+
+    golden = tmp_path / "golden_set.json"
+    golden.write_text(json.dumps({"questions": [{
+        "id": "ok-1", "query": "a plain question", "expected_type": "content",
+        "verified": True, "must_contain": [],
+        "reference": "Claim one. Claim two. Claim three.",
+    }]}))
+    monkeypatch.setattr(run_eval, "GOLDEN_SET", golden)
+
+    kept = run_eval.replay_one(source, json_path, "kept", track="rag",
+                               judge_backend="gemini", judge_model="stand-in-judge",
+                               max_workers=1, metrics=run_eval.REFERENCE_METRICS)
+    assert kept["config"]["references"] == "saved with source run"
+    assert kept["records"][0]["reference"] == "reference for ok-1"
+    assert kept["provenance"]["golden_set_sha256"] == source_hash
+
+    fresh = run_eval.replay_one(source, json_path, "fresh", track="rag",
+                                judge_backend="gemini", judge_model="stand-in-judge",
+                                max_workers=1, metrics=run_eval.REFERENCE_METRICS,
+                                refresh_refs=True)
+    assert fresh["config"]["references"] == "current golden set"
+    assert fresh["config"]["references_changed"] == ["ok-1"]
+    assert fresh["records"][0]["reference"] == "Claim one. Claim two. Claim three."
+    assert fresh["records"][0]["answer"] == source["records"][0]["answer"]
+    assert fresh["records"][0]["contexts"] == source["records"][0]["contexts"]
+    assert fresh["provenance"]["golden_set_sha256"] == hashlib.sha256(golden.read_bytes()).hexdigest()
+    # the saved run on disk is never modified
+    assert source["records"][0]["reference"] == "reference for ok-1"
+
+
+def test_refresh_references_rejects_unknown_questions(monkeypatch, tmp_path):
+    golden = tmp_path / "golden_set.json"
+    golden.write_text(json.dumps({"questions": []}))
+    monkeypatch.setattr(run_eval, "GOLDEN_SET", golden)
+    with pytest.raises(SystemExit):
+        run_eval.refresh_references(RECORDS[:1])
+
+
+class SlowJudge(StandInJudge):
+    """Answers like the stand-in judge, but every call takes `delay` seconds."""
+    delay: float = 0.25
+
+    async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
+        import asyncio
+        await asyncio.sleep(self.delay)
+        return self._generate(messages, stop=stop, run_manager=run_manager, **kwargs)
+
+
+def test_slow_judge_times_out_precision_first(stand_in, monkeypatch):
+    # The time limit covers a whole metric, and context precision makes one
+    # judge call per chunk. With 8 chunks and every call slow, precision runs
+    # out of time while the metrics that make one to three calls finish. This is
+    # the every-fourth-job pattern seen on a slow free-tier judge.
+    from ragas.llms import LangchainLLMWrapper
+    import ragas.run_config as run_config_module
+
+    monkeypatch.setattr(run_eval, "build_judge_llm",
+                        lambda *a, **k: LangchainLLMWrapper(SlowJudge()))
+    monkeypatch.setattr(run_eval, "JUDGE_TIMEOUT_S", 1.2)
+    # The stand_in fixture forces timeout=30; let the harness value through.
+    fixture_config = run_config_module.RunConfig
+
+    def harness_timeout(**kwargs):
+        cfg = fixture_config(**kwargs)
+        cfg.timeout = run_eval.JUDGE_TIMEOUT_S
+        return cfg
+
+    monkeypatch.setattr(run_config_module, "RunConfig", harness_timeout)
+
+    record = _record("slow-1", "a plain question", "a plain answer",
+                     contexts=[f"chunk {i}" for i in range(8)])
+    track = run_eval.score_rag_track([record], "gemini", "slow-judge", max_workers=1)
+    row = track["rows"][0]
+
+    assert row["status"]["llm_context_precision_with_reference"] == "timeout"
+    assert row["llm_context_precision_with_reference"] is None
+    for m in ("faithfulness", "answer_relevancy", "context_recall"):
+        assert row["status"][m] == "ok", m
+
+    finished = [c for c in track["_judge_calls"] if c["output"] is not None]
+    assert finished and all(c["duration_s"] >= 0.2 for c in finished)
+    assert all(c["started_at"] for c in track["_judge_calls"])
+
+
+def test_timeout_is_recorded_in_the_run_config(stand_in, monkeypatch):
+    monkeypatch.setattr(run_eval, "JUDGE_TIMEOUT_S", 777)
+    run = run_eval.score_records(RECORDS[:1], {
+        "label": "t", "judge_backend": "gemini", "judge_model": "stand-in"},
+        track="rag", max_workers=1)
+    assert run["config"]["judge_timeout_s"] == 777
