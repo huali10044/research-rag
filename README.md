@@ -176,16 +176,20 @@ Most published RAG projects execute a single sweep across $k$, pick the configur
 - Context Recall reached **0.833** (vs. 0.583 at $k=5$ and 0.639 at $k=12$).
 - Faithfulness peaked at **0.767** (vs. 0.609 at $k=5$ and 0.657 at $k=12$).
 
+Both $k=8$ figures come from a run in which the judge scored only **9 of the 18** questions (8 of 18 for context precision), while the $k=5$ and $k=12$ runs scored 16–18. They are means over different question sets and are not directly comparable; see the coverage note below the next table.
+
 However, **when replicated across multiple independent runs, the apparent peak dissolved into measurement noise**:
 
 | Metric at `top_k=8` | Run 1 | Run 2 | Run 3 | Mean | Sample Std Dev ($s$) | Observed Spread $[x_\min, x_\max]$ |
 |---|---|---|---|---|---|---|
-| **Faithfulness** | 0.767 | 0.590 | 0.640 | 0.666 | 0.091 | $[0.590, 0.767]$ |
-| **Answer Relevancy** | 0.900 | 0.804 | 0.835 | 0.846 | 0.049 | $[0.804, 0.900]$ |
-| **Context Precision** | 0.655 | 0.585 | 0.687 | 0.642 | 0.052 | $[0.585, 0.687]$ |
-| **Context Recall** | 0.833 | 0.611 | 0.625 | 0.690 | 0.124 | $[0.611, 0.833]$ |
+| **Faithfulness** | 0.767 (9/18) | 0.590 | 0.640 (17/18) | 0.666 | 0.091 | $[0.590, 0.767]$ |
+| **Answer Relevancy** | 0.900 (9/18) | 0.804 | 0.835 (17/18) | 0.846 | 0.049 | $[0.804, 0.900]$ |
+| **Context Precision** | 0.655 (8/18) | 0.585 | 0.687 (16/18) | 0.642 | 0.052 | $[0.585, 0.687]$ |
+| **Context Recall** | 0.833 (9/18) | 0.611 | 0.625 (16/18) | 0.690 | 0.124 | $[0.611, 0.833]$ |
 
-- **Within-config variance overwhelms between-config margins**: The standard deviation at $k=8$ ($s = 0.049\text{--}0.124$) is larger than the descriptive margins between $k=5, 8, 12$ ($0.009\text{--}0.051$). The apparent peak in single-pass evaluation was simply a high draw on Run 1.
+**Coverage note.** A cell marked `(scored/18)` is a mean over only the questions the judge scored in that run; unmarked cells cover all 18. Mean, $s$ and spread above mix these question sets, so they overstate the run-to-run spread. Restricted to the **9 questions that all seven September runs scored**, context recall is 0.67 at $k=3$, 0.78 at $k=5$ (both runs), 0.72–0.83 at $k=8$ and 0.72 at $k=12$: there is no peak, and the $k=8$ spread is **0.11, not 0.22**. The follow-up article ["Judge noise or answer noise?"](https://dev.to/hualiphd/judge-noise-or-answer-noise-what-really-moves-rag-evaluation-scores-hfl) re-reads the sweep on these matched questions.
+
+- **Within-config variance overwhelms between-config margins**: The standard deviation at $k=8$ ($s = 0.049\text{--}0.124$) is larger than the descriptive margins between $k=5, 8, 12$ ($0.009\text{--}0.051$). The apparent peak in single-pass evaluation came from Run 1, which both drew high and covered only 9 of 18 questions; on matched questions the margins between settings shrink as well, so the conclusion holds with a smaller spread.
 - **Paired query testing reveals retrieval redundancy**: Paired comparison between $k=8$ and $k=12$ on the identical queries showed that **8 of 9 queries tied exactly on Context Recall** ($D_i = 0$), and **5 of 8 tied on Context Precision**. The underlying retrieval set for this corpus is largely saturated by $k=8$; marginal chunks ranked 9 through 12 rarely change what the generator uses or what the judge considers relevant.
 - **The code vs. judge contrast**: While LLM-judged metrics showed substantial run-to-run drift, **deterministic assertions and routing accuracy stayed at 100% across all 7 evaluation runs with zero variance**.
 - **Systematic Judge Calibration**: Switching from Cohere (`command-r7b-12-2024`) to Gemini (`gemini-3.5-flash-lite`) shifted metrics by **$1.7\times\text{--}2.8\times$ the run-to-run standard deviation** (Cohere being systematically lenient; Gemini Flash Lite systematically strict). The choice of evaluation judge moved scores more than the retrieval parameter being evaluated.
