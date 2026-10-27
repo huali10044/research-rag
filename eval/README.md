@@ -240,7 +240,7 @@ Generator: Groq (`openai/gpt-oss-20b`) | Judge: Gemini (`gemini-3.5-flash-lite`,
 
 ### 1. Retrieval Depth Sweep ($k=3, 5, 8, 12$)
 
-Initial single-pass ablation across retrieval depth configurations ($n=18$ scorable queries per run):
+Initial single-pass ablation across retrieval depth configurations (18 judged queries per run; not every run scored all 18, see the coverage note in Section 2):
 
 | Config | n (runs) | Faithfulness | Answer Relevancy | Context Precision | Context Recall | Assertion Pass Rate | Routing Accuracy |
 |---|---|---|---|---|---|---|---|
@@ -252,7 +252,7 @@ Initial single-pass ablation across retrieval depth configurations ($n=18$ scora
 Across repeated runs, `top_k=8` achieved the highest mean score on three of the four RAGAS metrics (faithfulness, context precision, and context recall; `top_k=5` achieved highest mean answer relevancy). However, as shown below, the within-configuration variability across repeated runs was substantial, and the available data do not establish statistically significant superiority over `top_k=12` or `top_k=5`. We therefore treat `top_k=8` as the candidate operating point for confirmatory paired evaluation on a larger query set.
 
 Only two structural observations are unambiguous:
-1. **$k=3$ under-retrieves**: context recall is the lowest across every evaluated run (0.528), demonstrating context starvation when retrieval depth is too shallow.
+1. **$k=3$ may under-retrieve (a hint, not a finding)**: context recall is the lowest of any run, both over all 18 questions (0.528) and on the 9 questions every run scored (0.67, against 0.72–0.83 for the other six runs). But on 9 questions the gap is below the noise bar, and all of it comes from one question (`cont-01`), which $k=3$ missed and every other run found. Treat it as a direction worth testing.
 2. **Deterministic assertions and routing show zero variance**: All 7 runs achieved 100% pass rates (8/8 assertions, 26/26 routing decisions), confirming that system logic and routing are robust while LLM-judged metrics carry nearly all the observed uncertainty.
 
 ### 2. Multi-Run Variability at the Candidate Operating Point ($n=3$ Runs at $k=8$)
@@ -261,14 +261,24 @@ Evaluating `top_k=8` across three identical runs (Groq generator, Gemini Flash L
 
 | Metric | Run 1 | Run 2 | Run 3 | Mean ($\bar{x}$) | Sample Std Dev ($s$) | Observed Range $[x_\min, x_\max]$ | Range Spread |
 |---|---|---|---|---|---|---|---|
-| **Faithfulness** | 0.767 | 0.590 | 0.640 | 0.666 | 0.091 | $[0.590, 0.767]$ | 0.176 |
-| **Answer Relevancy** | 0.900 | 0.804 | 0.835 | 0.846 | 0.049 | $[0.804, 0.900]$ | 0.096 |
-| **Context Precision** | 0.655 | 0.585 | 0.687 | 0.642 | 0.052 | $[0.585, 0.687]$ | 0.102 |
-| **Context Recall** | 0.833 | 0.611 | 0.625 | 0.690 | 0.124 | $[0.611, 0.833]$ | 0.222 |
+| **Faithfulness** | 0.767 (9/18) | 0.590 | 0.640 (17/18) | 0.666 | 0.091 | $[0.590, 0.767]$ | 0.176 |
+| **Answer Relevancy** | 0.900 (9/18) | 0.804 | 0.835 (17/18) | 0.846 | 0.049 | $[0.804, 0.900]$ | 0.096 |
+| **Context Precision** | 0.655 (8/18) | 0.585 | 0.687 (16/18) | 0.642 | 0.052 | $[0.585, 0.687]$ | 0.102 |
+| **Context Recall** | 0.833 (9/18) | 0.611 | 0.625 (16/18) | 0.690 | 0.124 | $[0.611, 0.833]$ | 0.222 |
+
+**Coverage note.** A cell marked `(scored/18)` is a mean over only the questions the judge scored in that run; unmarked cells cover all 18. Mean, $s$, range and spread above mix these question sets. On the **9 questions that all seven September runs scored**, the $k=8$ runs give:
+
+| Metric (9 matched questions) | Run 1 | Run 2 | Run 3 | Range Spread |
+|---|---|---|---|---|
+| Faithfulness | 0.767 | 0.719 | 0.785 | 0.066 |
+| Answer Relevancy | 0.900 | 0.910 | 0.869 | 0.041 |
+| Context Recall | 0.833 | 0.722 | 0.778 | 0.111 |
+
+On the same 9 questions, context recall is 0.67 at $k=3$, 0.78 at $k=5$ (both runs) and 0.72 at $k=12$. Context precision has only 8 questions in common and is left out.
 
 **Key Finding — Noise Overwhelms Single-Run Margins:**
 - The margins of `top_k=8`'s mean over `top_k=12` (+0.009 faithfulness, +0.019 relevancy, +0.023 precision, +0.051 recall) range between **0.10 and 0.44 standard deviations** of `top_k=8` itself.
-- On every metric, the within-configuration range at $k=8$ ($0.096$–$0.222$) exceeds the descriptive margin between configurations ($0.009$–$0.051$). The appearance of a clean peak in single-pass sweeps was heavily influenced by Run 1 drawing high (e.g., recall 0.833 vs. 0.611–0.625 on subsequent runs).
+- On every metric, the within-configuration range at $k=8$ ($0.096$–$0.222$) exceeds the descriptive margin between configurations ($0.009$–$0.051$). The appearance of a clean peak in single-pass sweeps came from Run 1, which both drew high and was scored on only 9 of 18 questions (recall 0.833 on 9 questions vs. 0.611–0.625 on 16–18). On matched questions the $k=8$ recall spread is 0.111 rather than 0.222, and the between-setting margins shrink too, so the conclusion holds with a smaller spread.
 - `[min, max]` reflects the observed sample range of this specific test run, not a formal confidence interval.
 
 ### 3. Systematic Judge Calibration vs. Run-to-Run Drift
