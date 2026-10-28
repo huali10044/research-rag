@@ -165,9 +165,11 @@
       "id": "cont-05",
       "query": "What cognitive biases affect information retrieval according to this research?",
       "expected_type": "content",
-      "reference": "The 2005 work examines how analyst cognitive biases such as confirmation bias distort information seeking and retrieval, and proposes system-side mechanisms to counteract them during search.",
+      "reference": "The 2005 work presents an anti-bias mechanism (ABM) for combating cognitive biases in information retrieval. ABM automatically generates alternative, competing queries alongside the user's original query. A small set of the best results from the competing queries is mixed in with the original results.",
+      "reference_v1": "The 2005 work examines how analyst cognitive biases such as confirmation bias distort information seeking and retrieval, and proposes system-side mechanisms to counteract them during search.",
       "must_contain": [],
-      "verified": true
+      "verified": true,
+      "notes": "Oct 13, 2026: split into 3 claims so context recall is not a single yes/no judgment. Dropped 'confirmation bias': the 2005 paper does not name it (it appears in the 2013 serious-game paper). Oct 28, 2026: verified against the paper's abstract and ABM step 5; merged ahead of the other 12 rewritten references in PR #6."
     },
     {
       "id": "cont-06",
