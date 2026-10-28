@@ -338,6 +338,14 @@ JUDGE_ORDER = ["gemini", "anthropic", "openai", "cohere", "groq", "mistral"]
 # file so a score can be traced back to the exact judge settings.
 JUDGE_TEMPERATURE = 0.0
 
+# Time limit, in seconds, for one metric on one question. RAGAS applies it to the
+# whole metric, not to each judge call, and context precision makes one judge
+# call per retrieved chunk (8 at k=8, 12 at k=12) while the other metrics make
+# one to three. At 300 s, precision was the only metric to time out whenever the
+# judge slowed to about 40 s a call. 900 s leaves room for that; change it with
+# --judge-timeout. Recorded in each result file.
+JUDGE_TIMEOUT_S = 900
+
 
 def _backend_available(name: str) -> bool:
     cfg = rag.BACKENDS[name]
@@ -554,7 +562,8 @@ def build_embeddings():
 
 MISSING_REASONS = {
     "rate_limit":       "judge API refused the call (quota or rate limit)",
-    "timeout":          "judge call timed out",
+    "timeout":          "metric ran past the per-question time limit "
+                        "(--judge-timeout)",
     "parse_failure":    "judge answered but the RAGAS parser could not read it",
     "judge_error":      "judge call failed for another reason",
     "harness_error":    "the metric failed before any judge call was made "
@@ -594,6 +603,14 @@ def build_judge_trace(question_ids: list[str], keep_prompts: bool = False):
             self.chains: dict[Any, tuple] = {}   # run_id → (name, parent, type, row)
             self.calls: dict[Any, dict] = {}     # llm run_id → call record
             self.metric_errors: dict[tuple, dict] = {}  # (row, metric) → error
+            self._t0: dict[Any, float] = {}      # llm run_id → monotonic start
+
+        def _finish(self, run_id) -> dict | None:
+            call = self.calls.get(run_id)
+            t0 = self._t0.pop(run_id, None)
+            if call is not None and t0 is not None:
+                call["duration_s"] = round(time.monotonic() - t0, 2)
+            return call
 
         def _locate(self, run_id) -> tuple[int | None, str | None, str | None]:
             """Walk up the run tree to find the row, metric and prompt names."""
@@ -639,7 +656,13 @@ def build_judge_trace(question_ids: list[str], keep_prompts: bool = False):
                 "prompt_chars": len(prompt_text),
                 "output": None,
                 "error": None,
+                # Wall-clock time from the call's start to its end or error.
+                # It includes waiting on the rate limiter and any retries the
+                # client makes internally, so it is what the time limit sees.
+                "started_at": datetime.now().isoformat(timespec="seconds"),
+                "duration_s": None,
             }
+            self._t0[run_id] = time.monotonic()
             if keep_prompts:
                 call["prompt_text"] = prompt_text
             self.calls[run_id] = call
@@ -654,14 +677,14 @@ def build_judge_trace(question_ids: list[str], keep_prompts: bool = False):
             self._start_call(run_id, parent_run_id, "\n".join(prompts))
 
         def on_llm_end(self, response, *, run_id, **kwargs):
-            call = self.calls.get(run_id)
+            call = self._finish(run_id)
             if call is None:
                 return
             texts = [g.text for gens in response.generations for g in gens]
             call["output"] = texts[0] if len(texts) == 1 else texts
 
         def on_llm_error(self, error, *, run_id, **kwargs):
-            call = self.calls.get(run_id)
+            call = self._finish(run_id)
             if call is not None:
                 call["error"] = f"{type(error).__name__}: {str(error)[:500]}"
 
@@ -799,7 +822,7 @@ def score_rag_track(
     # max_workers=1 keeps free-tier judges inside their rate limit; the long
     # max_wait lets tenacity ride out a 429 instead of failing the whole run.
     run_config = RunConfig(
-        timeout=300,
+        timeout=JUDGE_TIMEOUT_S,
         max_retries=10,
         max_wait=90,
         max_workers=max_workers,
@@ -1214,6 +1237,7 @@ def score_records(
         "config": {
             **config,
             "judge_temperature": JUDGE_TEMPERATURE,
+            "judge_timeout_s": JUDGE_TIMEOUT_S,
             "judge_rpm": (judge_rpm if judge_rpm is not None
                           else _JUDGE_RPM_DEFAULTS.get(judge_backend, 15)),
             "embed_model": rag.EMBED_MODEL,
@@ -1356,6 +1380,7 @@ def replay_one(
 
 
 def main() -> None:
+    global JUDGE_TIMEOUT_S
     cfg = load_eval_config()
     load_eval_secrets(cfg)  # populate os.environ from eval/secrets.toml, if present
 
@@ -1385,6 +1410,10 @@ def main() -> None:
                    help="Judge requests/minute cap. Defaults to a per-backend value "
                         "based on that provider's free-tier limit; pass 0 to disable "
                         "(paid keys). max_workers alone does NOT bound request rate.")
+    p.add_argument("--judge-timeout", type=float, default=JUDGE_TIMEOUT_S, metavar="SECONDS",
+                   help=f"Time limit for one metric on one question (default "
+                        f"{JUDGE_TIMEOUT_S}). Context precision makes one judge call "
+                        "per retrieved chunk, so it needs the most time.")
     p.add_argument("--limit", type=int, default=None, help="Evaluate only the first N questions")
     p.add_argument("--repeats", type=int, default=1, metavar="N",
                    help="Run each configuration N times. With --replay this isolates "
@@ -1415,6 +1444,9 @@ def main() -> None:
         p.error("--replay re-runs the judge, so it cannot be combined with --track exact")
     if args.refresh_references and not args.replay:
         p.error("--refresh-references only applies to --replay")
+    if args.judge_timeout <= 0:
+        p.error("--judge-timeout must be positive")
+    JUDGE_TIMEOUT_S = args.judge_timeout
 
     def repeat_label(base: str, i: int) -> str:
         return f"{base} (run {i + 1})" if args.repeats > 1 else base

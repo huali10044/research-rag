@@ -303,3 +303,57 @@ def test_refresh_references_rejects_unknown_questions(monkeypatch, tmp_path):
     monkeypatch.setattr(run_eval, "GOLDEN_SET", golden)
     with pytest.raises(SystemExit):
         run_eval.refresh_references(RECORDS[:1])
+
+
+class SlowJudge(StandInJudge):
+    """Answers like the stand-in judge, but every call takes `delay` seconds."""
+    delay: float = 0.25
+
+    async def _agenerate(self, messages, stop=None, run_manager=None, **kwargs):
+        import asyncio
+        await asyncio.sleep(self.delay)
+        return self._generate(messages, stop=stop, run_manager=run_manager, **kwargs)
+
+
+def test_slow_judge_times_out_precision_first(stand_in, monkeypatch):
+    # The time limit covers a whole metric, and context precision makes one
+    # judge call per chunk. With 8 chunks and every call slow, precision runs
+    # out of time while the metrics that make one to three calls finish. This is
+    # the every-fourth-job pattern seen on a slow free-tier judge.
+    from ragas.llms import LangchainLLMWrapper
+    import ragas.run_config as run_config_module
+
+    monkeypatch.setattr(run_eval, "build_judge_llm",
+                        lambda *a, **k: LangchainLLMWrapper(SlowJudge()))
+    monkeypatch.setattr(run_eval, "JUDGE_TIMEOUT_S", 1.2)
+    # The stand_in fixture forces timeout=30; let the harness value through.
+    fixture_config = run_config_module.RunConfig
+
+    def harness_timeout(**kwargs):
+        cfg = fixture_config(**kwargs)
+        cfg.timeout = run_eval.JUDGE_TIMEOUT_S
+        return cfg
+
+    monkeypatch.setattr(run_config_module, "RunConfig", harness_timeout)
+
+    record = _record("slow-1", "a plain question", "a plain answer",
+                     contexts=[f"chunk {i}" for i in range(8)])
+    track = run_eval.score_rag_track([record], "gemini", "slow-judge", max_workers=1)
+    row = track["rows"][0]
+
+    assert row["status"]["llm_context_precision_with_reference"] == "timeout"
+    assert row["llm_context_precision_with_reference"] is None
+    for m in ("faithfulness", "answer_relevancy", "context_recall"):
+        assert row["status"][m] == "ok", m
+
+    finished = [c for c in track["_judge_calls"] if c["output"] is not None]
+    assert finished and all(c["duration_s"] >= 0.2 for c in finished)
+    assert all(c["started_at"] for c in track["_judge_calls"])
+
+
+def test_timeout_is_recorded_in_the_run_config(stand_in, monkeypatch):
+    monkeypatch.setattr(run_eval, "JUDGE_TIMEOUT_S", 777)
+    run = run_eval.score_records(RECORDS[:1], {
+        "label": "t", "judge_backend": "gemini", "judge_model": "stand-in"},
+        track="rag", max_workers=1)
+    assert run["config"]["judge_timeout_s"] == 777
