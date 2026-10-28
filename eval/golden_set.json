@@ -14,7 +14,9 @@
     "                (also acts as a regression test on classify_query)",
     "  reference     ground-truth answer; required by context_precision / context_recall",
     "  must_contain  substrings the answer must include (exact track only)",
-    "  verified      whether you have checked the reference by hand"
+    "  verified      whether you have checked the reference by hand",
+    "",
+    "reference_v1  the earlier single-statement reference, kept for comparison (Oct 13, 2026)"
   ],
 
   "questions": [
@@ -99,9 +101,11 @@
       "id": "meta-02",
       "query": "What venue published the Opaque Attribute Alignment paper?",
       "expected_type": "metadata",
-      "reference": "Opaque Attribute Alignment appeared at the IEEE 28th International Conference on Data Engineering in 2012.",
+      "reference": "Opaque Attribute Alignment was published at the IEEE 28th International Conference on Data Engineering Workshops (ICDEW 2012). It was published in 2012.",
+      "reference_v1": "Opaque Attribute Alignment appeared at the IEEE 28th International Conference on Data Engineering in 2012.",
       "must_contain": ["Data Engineering"],
-      "verified": true
+      "verified": false,
+      "notes": "Oct 13, 2026: split into 2 claims so context recall is not a single yes/no judgment. Corpus metadata gives the venue as the ICDE Workshops (ICDEW 2012); the previous reference said the main ICDE conference. Check which is correct."
     },
     {
       "id": "meta-03",
@@ -115,9 +119,11 @@
       "id": "meta-04",
       "query": "Where was 'Adaptive Interest Modeling Improves Content Services at the Network Edge' published?",
       "expected_type": "metadata",
-      "reference": "It was published at the IEEE Military Communications Conference (MILCOM) in 2014.",
+      "reference": "The paper was published at the IEEE Military Communications Conference (MILCOM). It was published in 2014.",
+      "reference_v1": "It was published at the IEEE Military Communications Conference (MILCOM) in 2014.",
       "must_contain": ["MILCOM"],
-      "verified": true
+      "verified": false,
+      "notes": "Oct 13, 2026: split into 2 claims so context recall is not a single yes/no judgment. "
     },
     {
       "id": "meta-05",
@@ -133,33 +139,41 @@
       "id": "cont-01",
       "query": "What approach was used for spatial event prediction?",
       "expected_type": "content",
-      "reference": "The approach combines value function approximation with case-based reasoning to predict the timing and location of events, fusing geographic and non-geographic data sources.",
+      "reference": "The approach is a hybrid of reinforcement-learning value function approximation and case-based reasoning. It learns from historical spatial event patterns. It retrieves analogous past cases to predict future events in geographic space.",
+      "reference_v1": "The approach combines value function approximation with case-based reasoning to predict the timing and location of events, fusing geographic and non-geographic data sources.",
       "must_contain": [],
-      "verified": true
+      "verified": false,
+      "notes": "Oct 13, 2026: split into 3 claims so context recall is not a single yes/no judgment. Dropped 'predicts timing and location' and 'fuses geographic and non-geographic sources': the stored text of this paper does not say so; the timing/location wording appears in the separate 2009 PITS paper. Restore if the ICCBR paper itself says it."
     },
     {
       "id": "cont-02",
       "query": "What is the core idea behind opaque attribute alignment?",
       "expected_type": "content",
-      "reference": "The insight is that semantically similar attributes tend to have similar data distributions or densities, so distributional comparison — using kernel density estimation — can align attributes even when their names and schemas are opaque.",
+      "reference": "Opaque Attribute Alignment aligns attributes without relying on their names. It estimates the density of each attribute's data with Kernel Density Estimation. It compares those densities, using cross entropy, to decide which attributes align. A similarity hash lets the method handle non-numeric data.",
+      "reference_v1": "The insight is that semantically similar attributes tend to have similar data distributions or densities, so distributional comparison — using kernel density estimation — can align attributes even when their names and schemas are opaque.",
       "must_contain": [],
-      "verified": true
+      "verified": false,
+      "notes": "Oct 13, 2026: split into 4 claims so context recall is not a single yes/no judgment. "
     },
     {
       "id": "cont-03",
       "query": "How are virtual interest groups discovered across chat rooms?",
       "expected_type": "content",
-      "reference": "The system monitors multiple concurrent chat rooms in real time, builds user interest models from conversational activity using NLP and topic modeling, and clusters users with overlapping interests into virtual interest groups so that relevant information can be recommended across rooms.",
+      "reference": "The VIGIR tool monitors multiple concurrent chat rooms in real time. It builds adaptive interest models for chat users. It uses those models to identify virtual interest groups, including members a user does not know. It also recommends relevant chat snippets to users.",
+      "reference_v1": "The system monitors multiple concurrent chat rooms in real time, builds user interest models from conversational activity using NLP and topic modeling, and clusters users with overlapping interests into virtual interest groups so that relevant information can be recommended across rooms.",
       "must_contain": [],
-      "verified": true
+      "verified": false,
+      "notes": "Oct 13, 2026: split into 4 claims so context recall is not a single yes/no judgment. Dropped 'NLP and topic modeling' and 'clusters users': the paper lists topics only as future work, and the stored text does not describe clustering."
     },
     {
       "id": "cont-04",
       "query": "How does the adaptive nearest neighbor search work in the parts acquisition ePortal?",
       "expected_type": "content",
-      "reference": "It adapts a nearest-neighbor similarity search to user feedback so that the retrieval of substitute or obsolete parts improves over time, learning which attribute dimensions matter for judging part similarity.",
+      "reference": "The goal is to find a replacement that is as similar as possible to an obsolete part. Similarity is a weighted distance over part parameters, with larger weights for more important parameters. The Bubble Up algorithm adapts the weights from user feedback when the user selects a part. Iterations continue until the selected part rises higher in the ranked list.",
+      "reference_v1": "It adapts a nearest-neighbor similarity search to user feedback so that the retrieval of substitute or obsolete parts improves over time, learning which attribute dimensions matter for judging part similarity.",
       "must_contain": [],
-      "verified": true
+      "verified": false,
+      "notes": "Oct 13, 2026: split into 4 claims so context recall is not a single yes/no judgment. "
     },
     {
       "id": "cont-05",
@@ -175,50 +189,61 @@
       "id": "cont-06",
       "query": "How does adaptive interest modeling improve content services at the network edge?",
       "expected_type": "content",
-      "reference": "An adaptive model of each mobile user's interests drives content prefetching and peer-to-peer sharing at the network edge, reducing response time and increasing data availability in bandwidth-constrained mobile ad hoc networks.",
+      "reference": "Adaptive Interest Modeling (AIM) builds a model of each mobile user's interests at the network layer. The interest model drives content prefetching based on recognizing user situations. Users share interest models to stay up to date with each other. Prefetching reduces response time and increases data availability, at the cost of more network bandwidth.",
+      "reference_v1": "An adaptive model of each mobile user's interests drives content prefetching and peer-to-peer sharing at the network edge, reducing response time and increasing data availability in bandwidth-constrained mobile ad hoc networks.",
       "must_contain": [],
-      "verified": true
+      "verified": false,
+      "notes": "Oct 13, 2026: split into 4 claims so context recall is not a single yes/no judgment. Replaced 'peer-to-peer sharing' with interest-model sharing, which is what the paper describes."
     },
     {
       "id": "cont-07",
       "query": "What method is used to extract skills and expertise from resumes?",
       "expected_type": "content",
-      "reference": "The work presents an algorithm that takes a resume as input and produces an expertise model expressing both the types of skills present and the level of competency in each, rather than treating skills as a flat keyword list.",
+      "reference": "The method is called expertise modeling. It takes a resume as input. It produces a quantitative assessment of the competence, or level of mastery, of each skill. It also assesses expertise in each skill domain.",
+      "reference_v1": "The work presents an algorithm that takes a resume as input and produces an expertise model expressing both the types of skills present and the level of competency in each, rather than treating skills as a flat keyword list.",
       "must_contain": [],
-      "verified": true
+      "verified": false,
+      "notes": "Oct 13, 2026: split into 4 claims so context recall is not a single yes/no judgment. Dropped 'rather than treating skills as a flat keyword list': not stated in the stored text."
     },
     {
       "id": "cont-08",
       "query": "How does incremental user modeling handle heterogeneous user behaviors?",
       "expected_type": "content",
-      "reference": "The approach updates a user interest model incrementally as different behavior types arrive, combining heterogeneous signals into a single evolving interest representation rather than requiring batch retraining.",
+      "reference": "The approach learns user interests incrementally from multiple types of user behaviors or events. Concepts and their relations extracted from these events form the structural elements of the user interest model.",
+      "reference_v1": "The approach updates a user interest model incrementally as different behavior types arrive, combining heterogeneous signals into a single evolving interest representation rather than requiring batch retraining.",
       "must_contain": [],
-      "verified": true
+      "verified": false,
+      "notes": "Oct 13, 2026: split into 2 claims so context recall is not a single yes/no judgment. Dropped 'rather than requiring batch retraining': not stated in the stored text. Two claims only; add one if the paper gives another key step."
     },
     {
       "id": "cont-09",
       "query": "What security threat does profile-based security address?",
       "expected_type": "content",
-      "reference": "It addresses malicious mobile agents by building behavioral profiles of agent activity and detecting agents whose behavior deviates from the expected profile.",
+      "reference": "It addresses malicious mobile agents in distributed computing environments. Behavior profiles of users and agents are built dynamically. Activity that deviates from the profiles is flagged as anomalous and used for adaptive access control.",
+      "reference_v1": "It addresses malicious mobile agents by building behavioral profiles of agent activity and detecting agents whose behavior deviates from the expected profile.",
       "must_contain": [],
-      "verified": true
+      "verified": false,
+      "notes": "Oct 13, 2026: split into 3 claims so context recall is not a single yes/no judgment. "
     },
     {
       "id": "cont-10",
       "query": "What role does context play in managing analysis?",
       "expected_type": "content",
-      "reference": "The Managing Analysis Context work treats an analyst's working context as a first-class object that can be captured, maintained, and used to prioritize and recommend information relevant to the current investigative task.",
+      "reference": "The work detects context switches when an analyst works on multiple tasks at once. It separates contexts with an algorithm based on user modeling. Context switches were detected with 73 percent precision and 70 percent recall at a window of 30 analysis log events.",
+      "reference_v1": "The Managing Analysis Context work treats an analyst's working context as a first-class object that can be captured, maintained, and used to prioritize and recommend information relevant to the current investigative task.",
       "must_contain": [],
-      "verified": true
+      "verified": false,
+      "notes": "Oct 13, 2026: split into 3 claims so context recall is not a single yes/no judgment. Rewritten: the previous reference (prioritizing and recommending information) does not match the stored text, which is about detecting and separating analysis contexts."
     },
     {
       "id": "cont-11",
       "query": "What is the common thread connecting the user modeling papers across the corpus?",
       "expected_type": "content",
-      "reference": "Across the corpus, user modeling recurs as the mechanism for personalization: interest models are built from observed behavior and then used to drive recommendation, retrieval prioritization, content prefetching, collaboration discovery, and expertise assessment across domains ranging from e-procurement to intelligence analysis to mobile networks.",
+      "reference": "Across the corpus, user interest models are built from observed user behavior. These models drive recommendation, such as virtual interest groups in chat. They drive content prefetching in mobile networks. They drive expertise assessment from resumes.",
+      "reference_v1": "Across the corpus, user modeling recurs as the mechanism for personalization: interest models are built from observed behavior and then used to drive recommendation, retrieval prioritization, content prefetching, collaboration discovery, and expertise assessment across domains ranging from e-procurement to intelligence analysis to mobile networks.",
       "must_contain": [],
-      "verified": true,
-      "notes": "Cross-paper synthesis — stresses the per-paper deduplication cap."
+      "verified": false,
+      "notes": "Oct 13, 2026: split into 4 claims so context recall is not a single yes/no judgment. Kept to four claims, each tied to a paper in the corpus. Swap any for retrieval prioritization or e-procurement if preferred. Earlier note: Cross-paper synthesis — stresses the per-paper deduplication cap."
     },
 
     {
